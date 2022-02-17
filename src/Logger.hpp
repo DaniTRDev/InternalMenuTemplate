@@ -10,7 +10,7 @@ namespace change_me
 	class Logger
 	{
 		bool m_AttachConsole;
-		bool m_DidConsoleExist = false;
+		bool m_DidConsoleExist;
 		HANDLE m_ConsoleHandle{};
 		std::string_view m_ConsoleTitle;
 		std::ofstream m_ConsoleOut;
@@ -21,7 +21,7 @@ namespace change_me
 
 	public:
 		Logger(std::string_view consoleTitle, File filePath, bool attachConsole = true)
-			: m_ConsoleTitle(consoleTitle), m_FilePath(filePath), m_AttachConsole(attachConsole)
+			: m_ConsoleTitle(consoleTitle), m_FilePath(filePath), m_AttachConsole(attachConsole), m_DidConsoleExist(false)
 		{
 			InitConsole(m_AttachConsole);
 			OpenLogFile();
