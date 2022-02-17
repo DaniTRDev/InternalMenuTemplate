@@ -41,15 +41,18 @@ DWORD WINAPI attach_routine(LPVOID)
 
 	try
 	{
+		LOG(INFO) << "Initializing...";
 
+		while (g_bRunning)
+			std::this_thread::sleep_for(100ms);
 	}
 	catch (const std::exception& ex)
 	{
-
+		LOG(FATAL) << "Failure in attach_routine:\n" << ex.what();
 	}
 
-	while (g_bRunning)
-		std::this_thread::sleep_for(100ms);
+	logger_inst.reset();
+	file_manager_inst.reset();
 
 	CloseHandle(g_hMainThread);
 	FreeLibraryAndExitThread(g_hInstance, EXIT_SUCCESS);
