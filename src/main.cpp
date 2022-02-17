@@ -40,6 +40,10 @@ DWORD WINAPI attach_routine(LPVOID)
 	{
 		LOG(INFO) << "Initializing...";
 
+		LOG(G3LOG_DEBUG) << "Test Debug";
+		LOG(WARNING) << "Test Warning";
+		//LOG(FATAL) << "Test Fatal";
+ 
 		while (g_bRunning)
 			std::this_thread::sleep_for(100ms);
 	}
