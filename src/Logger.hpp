@@ -19,14 +19,14 @@ namespace change_me
 		std::ofstream m_ConsoleOut;
 		DWORD m_ConsoleMode;
 
-		File m_FilePath;
+		File m_File;
 		std::ofstream m_FileOut;
 
 		std::unique_ptr<g3::LogWorker> m_Worker;
 
 	public:
-		Logger(std::string_view consoleTitle, File filePath, bool attachConsole = true)
-			: m_ConsoleTitle(consoleTitle), m_FilePath(filePath), m_AttachConsole(attachConsole),
+		Logger(std::string_view consoleTitle, File file, bool attachConsole = true)
+			: m_ConsoleTitle(consoleTitle), m_File(file), m_AttachConsole(attachConsole),
 			  m_DidConsoleExist(false), m_Worker(g3::LogWorker::createLogWorker())
 		{
 			InitConsole(m_AttachConsole);
@@ -85,7 +85,7 @@ namespace change_me
 	private:
 		void OpenLogFile()
 		{
-			
+			m_FileOut.open(m_File.GetPath(), std::ios_base::out | std::ios_base::trunc);				
 		}
 
 		struct LogSink
@@ -129,11 +129,17 @@ namespace change_me
 				out
 					<< "[" << msg.timestamp("%H:%M:%S") << "]"
 					<< "\x1b[" << (int)color << "m"
-					<< "[" << msg.level() << "]"
+					<< "[" << std::setw(7) << msg.level() << "/"
+					<< msg.file() << ":" << msg.line() << "]"
 					<< "\x1b[" << (int)Color::RESET << "m"
 					<< ": ";
 
 				return out.str();
+			}
+
+			static std::string FormatFile(const g3::LogMessage& msg)
+			{
+
 			}
 		};
 	};
