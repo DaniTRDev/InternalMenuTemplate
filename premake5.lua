@@ -5,7 +5,7 @@ function DeclareCommon()
 
     -- versions
     systemversion "10.0"
-    toolset "v142"
+    toolset "v143"
     cppdialect "C++20"
 
     -- build output options
