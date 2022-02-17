@@ -8,7 +8,7 @@
 namespace change_me
 {
 	class Logger;
-	inline std::shared_ptr<Logger> g_log;
+	inline std::shared_ptr<Logger> g_Log;
 
 	enum class LogColor
 	{
@@ -24,25 +24,25 @@ namespace change_me
 	{
 
 	public:
-		Logger(std::string_view ConsoleTitle, File File, bool AttachConsole = true)
-			: m_ConsoleTitle(ConsoleTitle), m_File(File), m_AttachConsole(AttachConsole),
+		Logger(std::string_view consoleTitle, File file, bool attachConsole = true)
+			: m_ConsoleTitle(consoleTitle), m_File(file), m_AttachConsole(attachConsole),
 			  m_DidConsoleExist(false), m_Worker(g3::LogWorker::createLogWorker()), m_ConsoleHandle(NULL),
 			  m_OriginalConsoleMode(0)
 		{}
-		~Logger()
-			{}
+		virtual ~Logger()
+		{}
 
-		static std::shared_ptr<Logger> GetInstance(std::string_view ConsoleTitle, File File, bool AttachConsole = true)
+		static std::shared_ptr<Logger> GetInstance(std::string_view consoleTitle, File file, bool attachConsole = true)
 		{
-			static auto Ptr = std::make_shared<Logger>(ConsoleTitle, File, AttachConsole);
-			return Ptr;
+			static auto ptr = std::make_shared<Logger>(consoleTitle, file, attachConsole);
+			return ptr;
 		}
 		static std::shared_ptr<Logger> GetInstance()
 		{
-			if (!g_log)
+			if (!g_Log)
 				throw std::runtime_error("Error, before calling this you must initialize logger!");
 
-			return g_log;
+			return g_Log;
 		}
 
 		void Initialize()
@@ -70,7 +70,7 @@ namespace change_me
 				}
 			}
 			OpenOutStreams();
-			InitializeG3log();
+			InitializeG3Log();
 		}
 		void Uninitialize()
 		{
@@ -84,8 +84,7 @@ namespace change_me
 		}
 
 	private:
-
-		void InitializeG3log()
+		void InitializeG3Log()
 		{
 			m_Worker->addSink(std::make_unique<LogSink>(), &LogSink::Callback);
 			g3::initializeLogging(m_Worker.get());
@@ -100,8 +99,6 @@ namespace change_me
 			if (m_AttachConsole)
 				m_ConsoleOut.open("CONOUT$", std::ios_base::out | std::ios_base::app);
 
-			m_ConsoleOut << m_File.GetPath() << std::endl;
-
 			m_FileOut.open(m_File.GetPath(), std::ios_base::out | std::ios_base::trunc);
 		}
 		void CloseOutStreams()
@@ -113,12 +110,11 @@ namespace change_me
 		}
 
 	private:
-
 		struct LogSink
 		{
 			void Callback(g3::LogMessageMover log)
 			{
-				if (Logger::GetInstance()->m_AttachConsole)
+				if (Logger::GetInstance()->m_ConsoleOut.is_open())
 					Logger::GetInstance()->m_ConsoleOut << log.get().toString(LogSink::FormatConsole) << std::flush;
 
 				Logger::GetInstance()->m_FileOut << log.get().toString(LogSink::FormatFile) << std::flush;
@@ -169,7 +165,6 @@ namespace change_me
 		};
 
 	private:
-
 		friend struct LogSink;
 
 		bool m_AttachConsole;

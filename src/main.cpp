@@ -6,13 +6,13 @@ using namespace change_me;
 
 DWORD WINAPI MainThread(LPVOID)
 {
-	std::filesystem::path base_dir = std::getenv("appdata");
-	base_dir /= "InternalModMenu";
+	std::filesystem::path baseDir = std::getenv("appdata");
+	baseDir /= "InternalModMenu";
 
-	g_file_manager = FileManager::GetInstance(base_dir);
+	g_FileManager = FileManager::GetInstance(baseDir);
 
-	g_log = Logger::GetInstance("InternalModMenu", g_file_manager->GetProjectFile("/cout.log"));
-	g_log->Initialize();
+	g_Log = Logger::GetInstance("InternalModMenu", g_FileManager->GetProjectFile("cout.log"));
+	g_Log->Initialize();
 
 	try
 	{
@@ -36,10 +36,10 @@ DWORD WINAPI MainThread(LPVOID)
 		LOG(FATAL) << "Failure in MainThread:\n" << ex.what();
 	}
 
-	g_file_manager.reset();
+	g_Log->Uninitialize();
+	g_Log.reset();
 
-	g_log->Uninitialize();
-	g_log.reset();
+	g_FileManager.reset();
 
 	FreeLibraryAndExitThread(g_Instance, EXIT_SUCCESS); /*this will close the current thread == g_MainThread*/
 }

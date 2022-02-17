@@ -6,14 +6,14 @@
 namespace change_me
 {
 	class FileManager;
-	inline std::shared_ptr<FileManager> g_file_manager;
+	inline std::shared_ptr<FileManager> g_FileManager;
 
-	class FileManager
+	class FileManager final
 	{
 	public:
 
-		FileManager(std::filesystem::path BaseDir)
-			: m_BaseDir(BaseDir)
+		FileManager(std::filesystem::path baseDir)
+			: m_BaseDir(baseDir)
 		{
 			FileManager::EnsureFolderExists(m_BaseDir);
 		}
@@ -21,31 +21,37 @@ namespace change_me
 		{
 		}
 
-		static std::shared_ptr<FileManager> GetInstance(std::filesystem::path BaseDir)
+		static std::shared_ptr<FileManager> GetInstance(std::filesystem::path baseDir)
 	    {
-			static auto Ptr = std::make_shared<FileManager>(BaseDir); /*make sure the Ptr is only craeted once*/
-			return Ptr;
+			static std::shared_ptr<FileManager> ptr = std::make_shared<FileManager>(baseDir);
+			return ptr;
 		}
 		static std::shared_ptr<FileManager> GetInstance()
 		{
-			if (!g_file_manager)
+			if (!g_FileManager)
 				throw std::exception("Error, you must initialize FileManager first!");
 
-			return g_file_manager;
+			return g_FileManager;
 		}
 
-		std::filesystem::path GetBaseDir()
+		const std::filesystem::path GetBaseDir()
 		{
 			return m_BaseDir;
 		}
 
-		File GetProjectFile(std::filesystem::path FilePath)
+		File GetProjectFile(std::filesystem::path filePath)
 		{
-			return File(GetInstance(), FilePath);
+			if (filePath.is_absolute())
+				throw std::exception("Project files are relative to the BaseDir, don't use absolute paths!");
+
+			return File(GetInstance(), filePath);
 		}
-		Folder GetProjectFolder(std::filesystem::path FolderPath)
+		Folder GetProjectFolder(std::filesystem::path folderPath)
 		{
-			return Folder(GetInstance(), FolderPath);
+			if (folderPath.is_absolute())
+				throw std::exception("Project folders are relative to the BaseDir, don't use absolute paths!");
+
+			return Folder(GetInstance(), folderPath);
 		}
 
 		static std::filesystem::path EnsureFileCanBeCreated(const std::filesystem::path filePath)
@@ -58,7 +64,7 @@ namespace change_me
 		{
 			bool create_path = !std::filesystem::exists(folderPath);
 
-			if (!std::filesystem::is_directory(folderPath))
+			if (!create_path && !std::filesystem::is_directory(folderPath))
 			{
 				std::filesystem::remove(folderPath);
 				create_path = true;
