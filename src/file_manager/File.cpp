@@ -4,15 +4,14 @@
 
 namespace change_me
 {
-	File::File(FileManager* fileManager, std::filesystem::path filePath)
-		: File(fileManager->GetBaseDir() / filePath)
+	File::File(std::shared_ptr<FileManager> FileManager, std::filesystem::path FilePath)
+		: File(FileManager->GetBaseDir() / FilePath)
 	{
-		m_FileManager = fileManager;
 		m_IsProjectFile = true;
 	}
 
-	File::File(std::filesystem::path filePath)
-		: m_FilePath(FileManager::EnsureFileCanBeCreated(filePath))
+	File::File(std::filesystem::path FilePath)
+		: m_FilePath(FileManager::EnsureFileCanBeCreated(FilePath)), m_IsProjectFile(false)
 	{
 
 	}
