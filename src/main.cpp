@@ -2,7 +2,7 @@
 #include "FileManager.hpp"
 #include "Logger.hpp"
 
-using namespace name;
+using namespace change_me;
 
 DWORD WINAPI attach_routine(LPVOID);
 bool WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason)
@@ -38,6 +38,7 @@ DWORD WINAPI attach_routine(LPVOID)
 		"InternalModMenu",
 		file_manager_inst->GetProjectFile("./cout.log")
 	);
+
 	try
 	{
 

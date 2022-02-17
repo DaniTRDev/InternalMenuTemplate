@@ -17,7 +17,7 @@
 #include <string>
 #include <string_view>
 
-namespace name
+namespace change_me
 {
 	using namespace std::chrono_literals;
 

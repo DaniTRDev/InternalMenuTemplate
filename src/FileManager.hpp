@@ -3,7 +3,7 @@
 #include "file_manager/File.hpp"
 #include "file_manager/Folder.hpp"
 
-namespace name
+namespace change_me
 {
 	class FileManager;
 	inline FileManager* g_file_manager{};
@@ -17,11 +17,13 @@ namespace name
 			: m_BaseDir(baseDir)
 		{
 			FileManager::EnsureFolderExists(m_BaseDir);
+
+			g_file_manager = this;
 		}
 
 		virtual ~FileManager()
 		{
-
+			g_file_manager = nullptr;
 		}
 
 		const std::filesystem::path GetBaseDir() const
@@ -45,11 +47,6 @@ namespace name
 			);
 		}
 
-		/// <summary>
-		/// Makes sure the Parent Folder exists for this file.
-		/// </summary>
-		/// <param name="filePath"></param>
-		/// <returns>The file path passed to this method.</returns>
 		static std::filesystem::path EnsureFileCanBeCreated(const std::filesystem::path filePath)
 		{
 			FileManager::EnsureFolderExists(filePath.parent_path());

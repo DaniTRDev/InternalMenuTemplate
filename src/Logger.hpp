@@ -2,7 +2,7 @@
 #include "common.hpp"
 #include "FileManager.hpp"
 
-namespace name
+namespace change_me
 {
 	class Logger;
 	inline Logger* g_log{};
