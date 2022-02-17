@@ -10,6 +10,16 @@ git clone https://github.com/Yimura/InternalMenuTemplate.git --recursive
 gen_project.bat
 ```
 
+## Adding a new feature
+
+Git branches are effectively a pointer to a snapshot of your changes. When you want to add a new feature or fix a bug—no matter how big or how small—you spawn a new branch to encapsulate your changes.
+
+```bash
+git checkout -b detour_hooking
+```
+
+Git checkout is mostly used to swap branches but providing the -b flag it will create a new branch and "check it out".
+
 ## Git Commit
 
 When committing try to work with the same methodology as below.
