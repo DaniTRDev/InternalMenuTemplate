@@ -33,7 +33,7 @@ namespace name
 		{
 			return File(
 				this,
-				FileManager::EnsureFileCanBeCreated(filePath)
+				filePath
 			);
 		}
 
@@ -41,7 +41,7 @@ namespace name
 		{
 			return Folder(
 				this,
-				FileManager::EnsureFolderExists(folderPath)
+				folderPath
 			);
 		}
 

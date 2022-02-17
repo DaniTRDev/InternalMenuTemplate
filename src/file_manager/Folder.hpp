@@ -18,16 +18,16 @@ namespace name
 
 	protected:
 		Folder(FileManager* fileManager, std::filesystem::path filePath)
-			: m_FileManager(fileManager), m_FolderPath(fileManager->GetBaseDir() / filePath), m_IsProjectFile(true)
+			: m_FileManager(fileManager), m_IsProjectFile(true)
 		{
-
+			Folder(fileManager->GetBaseDir() / filePath);
 		}
 
 	public:
 		Folder(std::filesystem::path folderPath)
 			: m_FolderPath(folderPath)
 		{
-
+			FileManager::EnsureFolderExists(m_FolderPath);
 		}
 
 		virtual ~Folder()

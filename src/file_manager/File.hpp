@@ -16,16 +16,16 @@ namespace name
 		std::filesystem::path m_FilePath;
 	protected:
 		File(FileManager* fileManager, std::filesystem::path filePath)
-			: m_FileManager(fileManager), m_FilePath(fileManager->GetBaseDir() / filePath), m_IsProjectFile(true)
+			: m_FileManager(fileManager), m_IsProjectFile(true)
 		{
-
+			File(fileManager->GetBaseDir() / filePath);
 		}
 
 	public:
 		File(std::filesystem::path filePath)
 			: m_FilePath(filePath)
 		{
-
+			FileManager::EnsureFileCanBeCreated(m_FilePath);
 		}
 
 		virtual ~File()
