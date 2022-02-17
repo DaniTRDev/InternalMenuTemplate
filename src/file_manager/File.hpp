@@ -1,42 +1,25 @@
 #pragma once
-#include "common.hpp"
-#include "FileManager.hpp"
 
-namespace name
+namespace change_me
 {
 	class FileManager;
 
 	class File
 	{
-		friend FileManager;
+		friend class FileManager;
 		FileManager* m_FileManager{};
 
 		bool m_IsProjectFile = false;
 
 		std::filesystem::path m_FilePath;
 	protected:
-		File(FileManager* fileManager, std::filesystem::path filePath)
-			: m_FileManager(fileManager), m_IsProjectFile(true)
-		{
-			File(fileManager->GetBaseDir() / filePath);
-		}
+		File(FileManager* fileManager, std::filesystem::path filePath);
 
 	public:
-		File(std::filesystem::path filePath)
-			: m_FilePath(filePath)
-		{
-			FileManager::EnsureFileCanBeCreated(m_FilePath);
-		}
+		File(std::filesystem::path filePath);
+		virtual ~File() = default;
 
-		virtual ~File()
-		{
-			
-		}
-
-		const std::filesystem::path GetPath() const
-		{
-			return m_FilePath;
-		}
+		const std::filesystem::path GetPath() const;
 
 	private:
 

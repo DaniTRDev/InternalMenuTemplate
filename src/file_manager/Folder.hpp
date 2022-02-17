@@ -1,15 +1,13 @@
 #pragma once
-#include "common.hpp"
-#include "File.hpp"
-#include "FileManager.hpp"
 
-namespace name
+namespace change_me
 {
+	class File;
 	class FileManager;
 
 	class Folder
 	{
-		friend FileManager;
+		friend class FileManager;
 		FileManager* m_FileManager{};
 
 		bool m_IsProjectFile = false;
@@ -17,38 +15,14 @@ namespace name
 		std::filesystem::path m_FolderPath;
 
 	protected:
-		Folder(FileManager* fileManager, std::filesystem::path filePath)
-			: m_FileManager(fileManager), m_IsProjectFile(true)
-		{
-			Folder(fileManager->GetBaseDir() / filePath);
-		}
+		Folder(FileManager* fileManager, std::filesystem::path filePath);
 
 	public:
-		Folder(std::filesystem::path folderPath)
-			: m_FolderPath(folderPath)
-		{
-			FileManager::EnsureFolderExists(m_FolderPath);
-		}
+		Folder(std::filesystem::path folderPath);
+		virtual ~Folder() = default;
 
-		virtual ~Folder()
-		{
-
-		}
-
-		File GetFile(std::filesystem::path filePath) const
-		{
-			if (filePath.is_absolute())
-				throw std::exception("Folder#GetFile requires a relative path.");
-
-			return File(
-				m_FolderPath / filePath
-			);
-		}
-
-		const std::filesystem::path GetPath() const
-		{
-			return m_FolderPath;
-		}
+		File GetFile(std::filesystem::path filePath) const;
+		const std::filesystem::path GetPath() const;
 
 	private:
 
