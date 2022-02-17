@@ -21,9 +21,9 @@ namespace change_me
 {
 	using namespace std::chrono_literals;
 
-	inline std::atomic<bool> g_bRunning = true;
+	inline std::atomic<bool> g_Running = true;
 
-	inline HINSTANCE	g_hInstance{};
-	inline HANDLE		g_hMainThread{};
-	inline DWORD		g_dwMainThreadId{};
+	inline HINSTANCE	g_Instance{};
+	inline HANDLE		g_MainThread{};
+	inline DWORD		g_MainThreadId{};
 }
