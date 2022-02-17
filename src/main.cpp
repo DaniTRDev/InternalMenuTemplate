@@ -27,9 +27,6 @@ bool WINAPI DllMain(HINSTANCE hInst, DWORD fdwReason)
 
 DWORD WINAPI attach_routine(LPVOID)
 {
-	while (!FindWindowA("grcWindow", "Grand Theft Auto V"))
-		std::this_thread::sleep_for(100ms);
-
 	std::filesystem::path base_dir = std::getenv("appdata");
 	base_dir /= "InternalModMenu";
 	std::unique_ptr<FileManager> file_manager_inst = std::make_unique<FileManager>(base_dir);
