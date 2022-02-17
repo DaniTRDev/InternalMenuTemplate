@@ -6,45 +6,46 @@
 namespace change_me
 {
 	class FileManager;
-	inline FileManager* g_file_manager{};
+	inline std::shared_ptr<FileManager> g_file_manager;
 
-	class FileManager final
+	class FileManager
 	{
-		std::filesystem::path m_BaseDir;
-
 	public:
-		FileManager(std::filesystem::path baseDir)
-			: m_BaseDir(baseDir)
+
+		FileManager(std::filesystem::path BaseDir)
+			: m_BaseDir(BaseDir)
 		{
 			FileManager::EnsureFolderExists(m_BaseDir);
-
-			g_file_manager = this;
 		}
-
 		virtual ~FileManager()
 		{
-			g_file_manager = nullptr;
 		}
 
-		const std::filesystem::path GetBaseDir() const
+		static std::shared_ptr<FileManager> GetInstance(std::filesystem::path BaseDir)
+	    {
+			static auto Ptr = std::make_shared<FileManager>(BaseDir); /*make sure the Ptr is only craeted once*/
+			return Ptr;
+		}
+		static std::shared_ptr<FileManager> GetInstance()
+		{
+			if (!g_file_manager)
+				throw std::exception("Error, you must initialize FileManager first!");
+
+			return g_file_manager;
+		}
+
+		std::filesystem::path GetBaseDir()
 		{
 			return m_BaseDir;
 		}
 
-		File GetProjectFile(std::filesystem::path filePath)
+		File GetProjectFile(std::filesystem::path FilePath)
 		{
-			return File(
-				this,
-				filePath
-			);
+			return File(GetInstance(), FilePath);
 		}
-
-		Folder GetProjectFolder(std::filesystem::path folderPath)
+		Folder GetProjectFolder(std::filesystem::path FolderPath)
 		{
-			return Folder(
-				this,
-				folderPath
-			);
+			return Folder(GetInstance(), FolderPath);
 		}
 
 		static std::filesystem::path EnsureFileCanBeCreated(const std::filesystem::path filePath)
@@ -53,7 +54,6 @@ namespace change_me
 
 			return filePath;
 		}
-
 		static std::filesystem::path EnsureFolderExists(const std::filesystem::path folderPath)
 		{
 			bool create_path = !std::filesystem::exists(folderPath);
@@ -70,6 +70,6 @@ namespace change_me
 		}
 
 	private:
-
+		std::filesystem::path m_BaseDir;
 	};
 }
