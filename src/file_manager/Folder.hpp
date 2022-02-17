@@ -7,24 +7,25 @@ namespace change_me
 
 	class Folder
 	{
-		friend class FileManager;
-		FileManager* m_FileManager{};
-
-		bool m_IsProjectFile = false;
-
-		std::filesystem::path m_FolderPath;
-
-	protected:
-		Folder(FileManager* fileManager, std::filesystem::path filePath);
 
 	public:
-		Folder(std::filesystem::path folderPath);
+		Folder(std::filesystem::path FolderPath);
 		virtual ~Folder() = default;
 
-		File GetFile(std::filesystem::path filePath) const;
+		File GetFile(std::filesystem::path FilePath) const;
 		const std::filesystem::path GetPath() const;
 
+	protected:
+		Folder(std::shared_ptr<FileManager> FileManager, std::filesystem::path FilePath);
+
 	private:
+
+		friend class FileManager;
+		std::shared_ptr<FileManager> m_FileManager;
+
+		bool m_IsProjectFile;
+
+		std::filesystem::path m_FolderPath;
 
 	};
 

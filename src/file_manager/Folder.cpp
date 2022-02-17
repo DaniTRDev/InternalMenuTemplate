@@ -4,15 +4,15 @@
 
 namespace change_me
 {
-	Folder::Folder(FileManager* fileManager, std::filesystem::path filePath)
-		: Folder(fileManager->GetBaseDir() / filePath)
+	Folder::Folder(std::shared_ptr<FileManager> FileManager, std::filesystem::path FilePath)
+		: Folder(FileManager->GetBaseDir() / FilePath)
 	{
-		m_FileManager = fileManager;
+		m_FileManager = FileManager;
 		m_IsProjectFile = true;
 	}
 
-	Folder::Folder(std::filesystem::path folderPath)
-		: m_FolderPath(FileManager::EnsureFolderExists(folderPath))
+	Folder::Folder(std::filesystem::path FolderPath)
+		: m_FolderPath(FileManager::EnsureFolderExists(FolderPath))
 	{
 
 	}
