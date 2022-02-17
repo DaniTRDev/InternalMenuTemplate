@@ -1,0 +1,12 @@
+[submodule "vendor/minhook"]
+	path = vendor/minhook
+	url = https://github.com/TsudaKageyu/minhook.git
+	ignore = dirty
+[submodule "vendor/imgui"]
+	path = vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+	ignore = dirty
+[submodule "vendor/g3log"]
+	path = vendor/g3log
+	url = https://github.com/KjellKod/g3log.git
+	ignore = dirty
