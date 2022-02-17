@@ -47,13 +47,29 @@ git push origin branch_name
 
 ```cpp
 class ClassName;
+inline ClassName* g_ClassName = nullptr;
 
-int FunctionName(int argName);
-
-int FunctionName(int argName)
+class ClassName
 {
-    int stack_allocated_var = 5;
-}
+public:
+    ClassName(std::string someParameter = "Instantiation")
+        : m_MemberVariable(someParameter)
+    {
+
+    }
+    virtual ~ClassName()
+    {
+
+    }
+
+    const std::string GetMemberVariable()
+    {
+        return m_MemberVariable;
+    }
+private:
+    std::string m_MemberVariable;
+
+};
 ```
 
 ## File Naming
