@@ -105,10 +105,13 @@ workspace "InternalModMenu"
 
     project "InternalModMenu"
         location "src/"
-        kind "ConsoleApp"
+        kind "SharedLib"
         language "C++"
 
         includedirs {
+			"vendor/g3log/src",
+			"vendor/minhook/include",
+			"vendor/imgui",
             "src/"
         }
 
@@ -123,6 +126,7 @@ workspace "InternalModMenu"
         }
 
         links {
+			"g3log",
             "imgui",
             "minhook"
         }
