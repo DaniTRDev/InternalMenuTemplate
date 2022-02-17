@@ -5,9 +5,10 @@
 namespace change_me
 {
 	File::File(FileManager* fileManager, std::filesystem::path filePath)
-		: m_FileManager(fileManager), m_IsProjectFile(true)
+		: File(fileManager->GetBaseDir() / filePath)
 	{
-		File(fileManager->GetBaseDir() / filePath);
+		m_FileManager = fileManager;
+		m_IsProjectFile = true;
 	}
 
 	File::File(std::filesystem::path filePath)

@@ -5,9 +5,10 @@
 namespace change_me
 {
 	Folder::Folder(FileManager* fileManager, std::filesystem::path filePath)
-		: m_FileManager(fileManager), m_IsProjectFile(true)
+		: Folder(fileManager->GetBaseDir() / filePath)
 	{
-		Folder(fileManager->GetBaseDir() / filePath);
+		m_FileManager = fileManager;
+		m_IsProjectFile = true;
 	}
 
 	Folder::Folder(std::filesystem::path folderPath)
