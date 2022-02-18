@@ -19,7 +19,8 @@ DWORD WINAPI MainThread(LPVOID)
 
 		/*start with the components*/
 		g_ComponentMgr = ComponentManager::GetInstance();
-
+		g_ComponentMgr->AddComponent(std::make_shared<ModuleManager>());
+		g_ComponentMgr->AddComponent(std::make_shared<PatternScanner>());
 
 		g_ComponentMgr->InitializeComponents();
 
@@ -32,14 +33,20 @@ DWORD WINAPI MainThread(LPVOID)
 			std::this_thread::sleep_for(100ms);
 		}
 
+		LOG(INFO) << "Uninitializing...";
 
 		g_ComponentMgr->UninitializeComponents();
+		
 		g_ComponentMgr.reset();
+		LOG(INFO) << "Uninitialized ComponentManager!";
+
+		g_FileManager.reset();
+		LOG(INFO) << "Uninitialized FileManager!";
+
+		std::this_thread::sleep_for(100ms); /*make sure everything is uninitialized*/
 
 		g_Log->Uninitialize();
 		g_Log.reset();
-
-		g_FileManager.reset();
 
 	}
 	catch (const std::exception& ex)

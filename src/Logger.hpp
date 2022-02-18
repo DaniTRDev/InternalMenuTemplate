@@ -29,8 +29,6 @@ namespace change_me
 			  m_DidConsoleExist(false), m_Worker(g3::LogWorker::createLogWorker()), m_ConsoleHandle(NULL),
 			  m_OriginalConsoleMode(0)
 		{}
-		virtual ~Logger()
-		{}
 
 		static std::shared_ptr<Logger> GetInstance(std::string_view consoleTitle, File file, bool attachConsole = true)
 		{
@@ -57,16 +55,16 @@ namespace change_me
 					SetConsoleTitleA(m_ConsoleTitle.data());
 					SetConsoleOutputCP(CP_UTF8);
 
-					DWORD console_mode;
-					GetConsoleMode(m_ConsoleHandle, &console_mode);
-					m_OriginalConsoleMode = console_mode;
+					DWORD ConsoleMode;
+					GetConsoleMode(m_ConsoleHandle, &ConsoleMode);
+					m_OriginalConsoleMode = ConsoleMode;
 
 					// terminal like behaviour enable full color support
-					console_mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+					ConsoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
 					// prevent clicking in terminal from suspending our main thread
-					console_mode &= ~(ENABLE_QUICK_EDIT_MODE);
+					ConsoleMode &= ~(ENABLE_QUICK_EDIT_MODE);
 
-					SetConsoleMode(m_ConsoleHandle, console_mode);
+					SetConsoleMode(m_ConsoleHandle, ConsoleMode);
 				}
 			}
 			OpenOutStreams();
@@ -74,16 +72,18 @@ namespace change_me
 		}
 		void Uninitialize()
 		{
-			if (m_DidConsoleExist)
-				SetConsoleMode(m_ConsoleHandle, m_OriginalConsoleMode);	
-			else 
-				FreeConsole();
-
 			UninitializeG3Log();
 			CloseOutStreams();
+
+			if (m_DidConsoleExist)
+				SetConsoleMode(m_ConsoleHandle, m_OriginalConsoleMode);	
+
+			if(m_AttachConsole)
+				FreeConsole();
 		}
 
 	private:
+
 		void InitializeG3Log()
 		{
 			m_Worker->addSink(std::make_unique<LogSink>(), &LogSink::Callback);
@@ -91,6 +91,7 @@ namespace change_me
 		}
 		void UninitializeG3Log()
 		{
+			m_Worker->removeAllSinks();
 			m_Worker.reset();
 		}
 
