@@ -40,7 +40,7 @@ namespace change_me
 		static std::shared_ptr<Logger> GetInstance()
 		{
 			if (!g_Log)
-				throw std::runtime_error("Error, before calling this you must initialize logger!");
+				throw std::runtime_error("Error, before you must initialize Logger first!");
 
 			return g_Log;
 		}
