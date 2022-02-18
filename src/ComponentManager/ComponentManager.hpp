@@ -20,17 +20,13 @@ namespace change_me
 					return std::static_pointer_cast<T>(Comp);
 			}
 
-			/*just a simple log before the crash, so we can know what we did wrong*/
 			return std::make_shared<T>();
 		}
 		template<typename T>
 		inline std::shared_ptr<T> GetComponent(std::size_t Index)
 		{
 			if (Index >= m_Components.size())
-			{/*just a simple log before the crash, so we can know what we did wrong*/
-				LOG(WARNING) << "The component at index" << Index << " has not been created!";
 				return std::make_shared<T>();
-			}
 
 			return std::static_pointer_cast<T>(m_Components[Index]);
 		}
@@ -45,5 +41,5 @@ namespace change_me
 
 		std::vector<std::shared_ptr<ComponentBase>> m_Components;
 
-	}; extern std::shared_ptr<ComponentManager> g_ComponentMgr; /*WE NEED TO DECLARE THIS AS A RAW PTR */
+	}; extern std::shared_ptr<ComponentManager> g_ComponentMgr; 
 }
