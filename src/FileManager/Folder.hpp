@@ -10,7 +10,6 @@ namespace change_me
 
 	public:
 		Folder(std::filesystem::path FolderPath);
-		virtual ~Folder() = default;
 
 		File GetFile(std::filesystem::path FilePath) const;
 		const std::filesystem::path GetPath() const;

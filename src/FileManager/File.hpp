@@ -9,7 +9,6 @@ namespace change_me
 	public:
 
 		File(std::filesystem::path FilePath);
-		virtual ~File() = default;
 
 		const std::filesystem::path GetPath() const;
 
