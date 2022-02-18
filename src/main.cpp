@@ -1,6 +1,5 @@
-#include "common.hpp"
+#include "Common.hpp"
 #include "FileManager.hpp"
-#include "Logger.hpp"
 
 using namespace change_me;
 
@@ -18,9 +17,11 @@ DWORD WINAPI MainThread(LPVOID)
 	{
 		LOG(INFO) << "Initializing...";
 
-		LOG(G3LOG_DEBUG) << "Test Debug";
-		LOG(WARNING) << "Test Warning";
-		//LOG(FATAL) << "Test Fatal";
+		/*start with the components*/
+		g_ComponentMgr = ComponentManager::GetInstance();
+
+
+		g_ComponentMgr->InitializeComponents();
 
 		while (g_Running)
 		{
@@ -30,16 +31,21 @@ DWORD WINAPI MainThread(LPVOID)
 
 			std::this_thread::sleep_for(100ms);
 		}
+
+
+		g_ComponentMgr->UninitializeComponents();
+		g_ComponentMgr.reset();
+
+		g_Log->Uninitialize();
+		g_Log.reset();
+
+		g_FileManager.reset();
+
 	}
 	catch (const std::exception& ex)
 	{
 		LOG(FATAL) << "Failure in MainThread:\n" << ex.what();
 	}
-
-	g_Log->Uninitialize();
-	g_Log.reset();
-
-	g_FileManager.reset();
 
 	FreeLibraryAndExitThread(g_Instance, EXIT_SUCCESS); /*this will close the current thread == g_MainThread*/
 }
