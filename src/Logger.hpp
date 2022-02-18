@@ -1,5 +1,5 @@
 #pragma once
-#include "common.hpp"
+#include "Common.hpp"
 #include "FileManager.hpp"
 #include <g3log/g3log.hpp>
 #include <g3log/loglevels.hpp>
@@ -40,7 +40,7 @@ namespace change_me
 		static std::shared_ptr<Logger> GetInstance()
 		{
 			if (!g_Log)
-				throw std::runtime_error("Error, before calling this you must initialize logger!");
+				throw std::runtime_error("Error, before you must initialize Logger first!");
 
 			return g_Log;
 		}
