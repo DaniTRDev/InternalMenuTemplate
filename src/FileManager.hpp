@@ -8,7 +8,7 @@ namespace change_me
 	class FileManager;
 	inline std::shared_ptr<FileManager> g_FileManager;
 
-	class FileManager final
+	class FileManager
 	{
 	public:
 
@@ -17,7 +17,7 @@ namespace change_me
 		{
 			FileManager::EnsureFolderExists(m_BaseDir);
 		}
-		virtual ~FileManager()
+		~FileManager()
 		{
 		}
 
