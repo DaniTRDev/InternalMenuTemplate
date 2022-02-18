@@ -1,7 +1,7 @@
 #pragma once
-#include "common.hpp"
-#include "file_manager/File.hpp"
-#include "file_manager/Folder.hpp"
+#include "Common.hpp"
+#include "FileManager/File.hpp"
+#include "FileManager/Folder.hpp"
 
 namespace change_me
 {
