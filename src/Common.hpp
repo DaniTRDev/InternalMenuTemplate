@@ -20,13 +20,13 @@
 #include <functional>
 #include <mutex>
 
+#include "Memory/PointerMath.hpp"
+
 #include "Logger.hpp" /*logger should not be modified very often*/
 
 #include "FileManager/File.hpp"
 #include "FileManager/Folder.hpp"
 #include "FileManager.hpp"
-
-#include "Memory/PointerMath.hpp"
 
 #include "ComponentManager/ComponentBase.hpp" /*the component system should not even be modified*/
 #include "ComponentManager/ComponentManager.hpp"
@@ -39,9 +39,11 @@ namespace change_me
 {
 	using namespace std::chrono_literals;
 
-	inline std::atomic<bool> g_Running = true;
+	extern std::atomic<bool> g_Running;
 
-	inline HINSTANCE	g_Instance{};
-	inline HANDLE		g_MainThread{};
-	inline DWORD		g_MainThreadId{};
+	extern HINSTANCE	g_Instance;
+	extern HANDLE		g_MainThread;
+	extern DWORD		g_MainThreadId;
+
+	extern std::string_view g_GameModuleName; /*for ex: GoW.exe || GTA5.exe */
 }
