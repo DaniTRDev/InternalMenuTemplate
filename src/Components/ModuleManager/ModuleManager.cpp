@@ -41,10 +41,10 @@ namespace change_me
 
 	PointerMath Module::GetExport(std::string_view Name)
 	{
-		return PointerMath(GetProcAddress(HMODULE(m_Base), Name.data()));
+		return PointerMath(std::uintptr_t(GetProcAddress(HMODULE(m_Base), Name.data())));
 	}
 
-	ModuleManager::ModuleManager() : ComponentBase("ModuleMgr", ComponentType::NoNeedsTick)
+	ModuleManager::ModuleManager() : ComponentBase("ModuleManager", ComponentType::NoNeedsTick)
 	{
 
 	}
