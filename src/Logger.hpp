@@ -14,11 +14,17 @@ namespace change_me
 	{
 		RESET,
 		WHITE = 97,
+		CYAN = 36,
+		MAGENTA = 35,
 		BLUE = 34,
 		GREEN = 32,
 		YELLOW = 33,
-		RED = 31
+		RED = 31,
+		BLACK = 30
 	};
+
+#define AddColorToStream(color) "\x1b[" << int(color) << "m"
+#define ResetStreamColor "\x1b[" << int(LogColor::RESET) << "m"
 
 	class Logger final
 	{
@@ -142,10 +148,10 @@ namespace change_me
 
 				out
 					<< "[" << msg.timestamp("%H:%M:%S") << "]"
-					<< "\x1b[" << (int)color << "m"
+					<< AddColorToStream(color)
 					<< "[" << std::setw(7) << msg.level() << "/"
 					<< msg.file() << ":" << msg.line() << "]"
-					<< "\x1b[" << (int)LogColor::RESET << "m"
+					<< ResetStreamColor
 					<< ": ";
 
 				return out.str();

@@ -34,10 +34,12 @@ namespace change_me
 		
 		std::string_view m_PatternStr;
 		std::vector<std::uint8_t> m_PatternBytes; 
+
+		PointerMath m_Ptr; /*just a friendly var we will use to cast the ptr*/
 	};
 
 	template<typename T>
-	class PattermImpl : Pattern
+	class PattermImpl : public Pattern
 	{
 	public:
 
@@ -52,11 +54,6 @@ namespace change_me
 
 			LOG(WARNING) << "The pointer " << m_Name << " isn't initialised!";
 		}
-
-	private:
-
-		PointerMath m_Ptr; /*just a friendly var we will use to cast the ptr*/
-
 	};
 
 

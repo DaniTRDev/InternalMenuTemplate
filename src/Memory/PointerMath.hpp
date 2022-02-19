@@ -22,8 +22,6 @@ namespace change_me
 	{
 	public:
 
-		inline PointerMath(void* Ptr) : m_Ptr(Ptr)
-			{}
 		inline PointerMath(std::uintptr_t Ptr) : m_Ptr(reinterpret_cast<void*>(Ptr))
 			{}
 

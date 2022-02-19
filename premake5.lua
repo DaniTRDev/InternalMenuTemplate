@@ -5,7 +5,7 @@ function DeclareCommon()
 
     -- versions
     systemversion "10.0"
-    toolset "v143"
+    toolset "v142"
     cppdialect "C++20"
 
     -- build output options
@@ -115,6 +115,9 @@ workspace "InternalModMenu"
             "src/"
         }
 
+        PrecompiledHeaderInclude = "Common.hpp"
+        PrecompiledHeaderSource = "src/Common.cpp"
+
         files {
             "src/**.hpp",
             "src/**.cpp",
@@ -130,6 +133,9 @@ workspace "InternalModMenu"
             "imgui",
             "minhook"
         }
+
+        pchheader "%{PrecompiledHeaderInclude}"
+        pchsource "%{PrecompiledHeaderSource}"
 
         DeclareCommon()
 
