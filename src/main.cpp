@@ -1,5 +1,6 @@
 #include "Common.hpp"
 #include "FileManager.hpp"
+#include "Pointers.hpp"
 
 using namespace change_me;
 
@@ -13,6 +14,8 @@ DWORD WINAPI MainThread(LPVOID)
 	g_Log = Logger::GetInstance("InternalModMenu", g_FileManager->GetProjectFile("cout.log"));
 	g_Log->Initialize();
 
+	g_GameModuleName = "GoW.exe";
+
 	try
 	{
 		LOG(INFO) << "Initializing...";
@@ -21,8 +24,10 @@ DWORD WINAPI MainThread(LPVOID)
 		g_ComponentMgr = ComponentManager::GetInstance();
 		g_ComponentMgr->AddComponent(std::make_shared<ModuleManager>());
 		g_ComponentMgr->AddComponent(std::make_shared<PatternScanner>());
+		g_ComponentMgr->AddComponent(std::make_shared<Pointers>());
 
 		g_ComponentMgr->InitializeComponents();
+		g_ComponentMgr->RunComponents();
 
 		while (g_Running)
 		{
@@ -34,6 +39,8 @@ DWORD WINAPI MainThread(LPVOID)
 		}
 
 		LOG(INFO) << "Uninitializing...";
+
+		std::this_thread::sleep_for(100ms); /*make sure everything is stopped*/
 
 		g_ComponentMgr->UninitializeComponents();
 		
