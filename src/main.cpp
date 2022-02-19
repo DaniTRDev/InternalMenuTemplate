@@ -1,6 +1,6 @@
 #include "Common.hpp"
 #include "FileManager.hpp"
-#include "Pointers.hpp"
+#include "Components/Pointers/Pointers.hpp"
 
 using namespace change_me;
 
