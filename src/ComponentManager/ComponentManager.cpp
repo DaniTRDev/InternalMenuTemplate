@@ -82,14 +82,12 @@ namespace change_me
 					else if (Comp->GetType() == ComponentType::NeedsTickOnce)
 						Comp->SetRunTick(false);
 				}
-			};
+			}();
 
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER)
-		{
-			
-			//LOG(WARNING) << "Component " << Comp->GetName() << " threw an exception";
-			//RemoveComponent(Comp->GetIndex());	/*stop it from executing*/
+		{		
+			//LOG(WARNING) << "A component threw an exception!";
 		}
 	}
 
