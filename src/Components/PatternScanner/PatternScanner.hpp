@@ -5,7 +5,8 @@ namespace change_me
 	class Pattern
 	{
 	public:
-		Pattern(std::string_view Name, std::string_view PatternStr);
+
+		Pattern(std::string_view PatternStr, std::string_view Name);
 
 		std::string_view GetName();
 		std::vector<std::uint8_t>& GetPatternBytes();
@@ -24,6 +25,8 @@ namespace change_me
 		using OnFinalPtr_t = std::function<void(PointerMath& Ptr)>;
 		OnFinalPtr_t OnFinalPtr; /*called after OnGetPtrsFromPtr, MUST be only overidden by PattermImpl and it's inherits*/
 
+		PointerMath m_Ptr; /*just a friendly var we will use to cast the ptr*/
+
 	private:
 
 		void TransforPatternStrToBytes();
@@ -34,25 +37,24 @@ namespace change_me
 		
 		std::string_view m_PatternStr;
 		std::vector<std::uint8_t> m_PatternBytes; 
-
-		PointerMath m_Ptr; /*just a friendly var we will use to cast the ptr*/
 	};
 
 	template<typename T>
-	class PattermImpl : public Pattern
+	class PatternImpl : public Pattern
 	{
 	public:
 
 		/*we need to declare the methods here because if we do in the .cpp the compiler will complain*/
-		inline PattermImpl(std::string_view Name, std::string_view PatternStr) : Pattern(Name, PatternStr)
+		inline PatternImpl(std::string_view PatternStr, std::string_view Name) : Pattern(PatternStr, Name)
 			{}
 
-		inline std::enable_if_t<std::is_pointer<T>::value, T> Get()
+		inline std::enable_if_t<std::is_pointer<T>::value, T> GetPtr()
 		{
-			if (m_Ptr.As<std::uintptr_t>() != 0)
-				return m_Ptr.As<T>;
+			auto PtrAddr = this->m_Ptr.As<std::uintptr_t>();
+			if (PtrAddr != 0)
+				return reinterpret_cast<T>(PtrAddr);
 
-			LOG(WARNING) << "The pointer " << m_Name << " isn't initialised!";
+			LOG(WARNING) << "The pointer " << this->GetName() << " isn't initialised!";
 		}
 	};
 
@@ -68,15 +70,18 @@ namespace change_me
 		bool Uninitialize() override;
 
 		/*we dont use std::shared_ptr because it will be a pain in the ass to add new ptrs, too much writting*/
-		void Add(Pattern* Pattern, std::shared_ptr<Module> Module);
+		void OnModule(std::shared_ptr<Module> Module, std::function<void()> Callback);
+		void Add(Pattern* Patt);
 
 		void Scan();
 
 	private:
 
-		std::vector<std::pair<Pattern*, std::shared_ptr<Module>>> m_Patterns;
+		void ScanPattern(std::shared_ptr<Pattern> PattInfo, std::shared_ptr<Module> Mod);
 
-		std::size_t m_PatternHints; /*num of patterns that got correctly scanned*/
-	};
+		std::map<std::shared_ptr<Module>, std::pair<std::vector<std::shared_ptr<Pattern>>, bool>> m_Patterns;
+		std::shared_ptr<Module> m_CurrentModule;
+
+	}; extern std::shared_ptr<PatternScanner> g_PatternScanner;
 
 }
