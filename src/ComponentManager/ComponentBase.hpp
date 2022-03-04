@@ -36,10 +36,9 @@ namespace change_me
 		void SetIndex(std::size_t Index);
 		void SetRunTick(bool State);
 
-	private:
+	protected:
 
 		bool m_Initialized;
-		bool m_RunTick;
 
 		std::string_view m_Name;
 		std::size_t m_Index;
