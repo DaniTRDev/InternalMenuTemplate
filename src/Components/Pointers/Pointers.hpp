@@ -13,9 +13,18 @@ namespace change_me
 		bool Run() override;
 		bool Uninitialize() override;
 
-		PattermImpl<void*>* m_Test1;
+		using WndProc_t = HRESULT(HWND, UINT, WPARAM, LPARAM);
+		HookWrapper<DHookWrapper, WndProc_t*>* m_Test1;
+
+		PatternImpl<ID3D11Device*>* m_Device;
+		ID3D11DeviceContext * m_Context;
+
+		PatternImpl<long*>* m_Height;
+		PatternImpl<long*>* m_Width;
+
+		HWND m_Hwnd;
 
 	private:
 
-	};
+	}; extern std::shared_ptr<Pointers> g_Pointers;
 }
