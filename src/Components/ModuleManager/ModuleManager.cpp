@@ -2,14 +2,19 @@
 
 namespace change_me
 {
+	std::shared_ptr<ModuleManager> g_ModuleManager;
+
 	Module::Module(std::string_view Name) : m_Initialized(false), m_Name(Name), 
-		m_Base(std::uintptr_t(GetModuleHandleA(m_Name.data()))), m_Size(0)
+		m_Base(0), m_Size(0)
+	{}
+
+	Module::Module() : m_Initialized(false), m_Name(""), m_Base(0), m_Size(0)
+		{}
+
+	bool Module::TryGetModule()
 	{
-		if (!m_Base)
-		{
-			LOG(WARNING) << "Could not get the module handle of " << m_Name << " check spelling!";
-			return;
-		}
+		if (m_Base = std::uintptr_t(GetModuleHandleA(m_Name.data())), m_Base == 0)
+			return false;
 
 		auto DosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(m_Base);
 		auto NtHeaders = reinterpret_cast<IMAGE_NT_HEADERS*>(m_Base + DosHeader->e_lfanew);
@@ -17,9 +22,13 @@ namespace change_me
 		m_Size = NtHeaders->OptionalHeader.SizeOfImage;
 
 		m_Initialized = true;
+
+		return true;
 	}
-	Module::Module() : m_Initialized(false), m_Name(""), m_Base(0), m_Size(0)
-		{}
+	bool Module::IsModuleLoaded()
+	{
+		return m_Initialized;
+	}
 
 	std::string_view Module::GetName()
 	{
@@ -44,15 +53,14 @@ namespace change_me
 		return PointerMath(std::uintptr_t(GetProcAddress(HMODULE(m_Base), Name.data())));
 	}
 
-	ModuleManager::ModuleManager() : ComponentBase("ModuleManager", ComponentType::NoNeedsTick)
+	ModuleManager::ModuleManager() : ComponentBase("ModuleManager", ComponentType::NeedsTick)
 	{
 
 	}
 
 	void ModuleManager::AddModule(std::shared_ptr<Module> Mod)
 	{
-		auto DidModuleExist = GetModule(Mod->GetName());
-		if (DidModuleExist->GetBase() != 0)
+		if (GetModule(Mod->GetName()))
 		{
 			LOG(WARNING) << "The module " << Mod->GetName() << " has already been added";
 			return;
@@ -63,16 +71,28 @@ namespace change_me
 
 	bool ModuleManager::Initialize()
 	{
-		return true; /*we don't have a code for initialisation*/
+		g_ModuleManager = g_ComponentMgr->GetComponent<ModuleManager>("ModuleManager");
+		m_Initialized = true;
+
+		return true; 
 	}
 	bool ModuleManager::Run()
 	{
-		/*we don't need a tick function*/
+		if (m_Initialized)
+		{
+			for (auto& Mod : m_Modules)
+			{
+				if (!Mod->IsModuleLoaded())
+					Mod->TryGetModule();
+			}
+		}
 		return true;
 	}
 	bool ModuleManager::Uninitialize()
 	{
 		m_Modules.clear();
+
+		m_Initialized = false;
 
 		return true;
 	}
@@ -84,7 +104,7 @@ namespace change_me
 			if (Mod->GetName() == Name)
 				return Mod;
 		}
-		return std::make_shared<Module>();
+		return nullptr;
 	}
 }
 
