@@ -1,9 +1,4 @@
 #pragma once
-#include "Common.hpp"
-#include "FileManager.hpp"
-#include <g3log/g3log.hpp>
-#include <g3log/loglevels.hpp>
-#include <g3log/logworker.hpp>
 
 namespace change_me
 {
@@ -151,8 +146,9 @@ namespace change_me
 					<< AddColorToStream(color)
 					<< "[" << std::setw(7) << msg.level() << "/"
 					<< msg.file() << ":" << msg.line() << "]"
-					<< ResetStreamColor
-					<< ": ";
+					<< ResetStreamColor 
+					<< ":";
+
 
 				return out.str();
 			}
@@ -164,8 +160,8 @@ namespace change_me
 				out
 					<< "[" << msg.timestamp("%H:%M:%S") << "]"
 					<< "[" << std::setw(7) << msg.level() << "/"
-					<< msg.file() << ":" << msg.line() << "]"
-					<< ": ";
+					<< msg.file() << ":" << msg.line() << "]" 
+					<< ":";
 
 				return out.str();
 			}
