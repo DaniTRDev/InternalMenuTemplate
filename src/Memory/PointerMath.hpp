@@ -41,7 +41,7 @@ namespace change_me
 		}
 		
 		template<typename T>
-		inline std::enable_if_t<std::is_pointer<T>::value, T> As() /*we only want to enable this in case it's a ptr,
+		inline std::enable_if_t<std::is_pointer_v<T>, T> As() /*we only want to enable this in case it's a ptr,
 															otherwise we will crash*/
 		{
 			return reinterpret_cast<T>(m_Ptr);

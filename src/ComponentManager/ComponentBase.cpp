@@ -3,7 +3,7 @@
 namespace change_me
 {
 	ComponentBase::ComponentBase(std::string_view Name, ComponentType Type) : m_Initialized(false), m_Name(Name), m_Index(0),
-		m_Type(Type), m_RunTick(true)
+		m_Type(Type)
 		{}
 	ComponentBase::ComponentBase()
 		{}
@@ -51,10 +51,6 @@ namespace change_me
 			return;
 		}
 		m_Index = Index;
-	}
-	void ComponentBase::SetRunTick(bool State)
-	{
-		m_RunTick = State;
 	}
 
 }

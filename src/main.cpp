@@ -1,6 +1,7 @@
 #include "Common.hpp"
-#include "FileManager.hpp"
 #include "Components/Pointers/Pointers.hpp"
+#include "Components/Hooking/Hook.hpp"
+#include "Components/Hooking/Hooking.hpp"
 
 using namespace change_me;
 
@@ -20,14 +21,19 @@ DWORD WINAPI MainThread(LPVOID)
 	{
 		LOG(INFO) << "Initializing...";
 
+		g_ThreadPool = ThreadPool::GetInstance();
+		LOG(INFO) << "Initializing ThreadPool";
+
 		/*start with the components*/
 		g_ComponentMgr = ComponentManager::GetInstance();
+		LOG(INFO) << "Initializing ComponentManager";
+
 		g_ComponentMgr->AddComponent(std::make_shared<ModuleManager>());
 		g_ComponentMgr->AddComponent(std::make_shared<PatternScanner>());
 		g_ComponentMgr->AddComponent(std::make_shared<Pointers>());
+		g_ComponentMgr->AddComponent(std::make_shared<Hooking>());
 
-		g_ComponentMgr->InitializeComponents();
-		g_ComponentMgr->RunComponents();
+		g_ThreadPool->CreateThread(std::static_pointer_cast<ThreadPoolBase>(g_ComponentMgr));
 
 		while (g_Running)
 		{
@@ -42,8 +48,11 @@ DWORD WINAPI MainThread(LPVOID)
 
 		std::this_thread::sleep_for(100ms); /*make sure everything is stopped*/
 
-		g_ComponentMgr->UninitializeComponents();
-		
+		g_ThreadPool->Uninitialize();
+		g_ThreadPool.reset();
+
+		LOG(INFO) << "Uninitialized ThreadPool!";
+
 		g_ComponentMgr.reset();
 		LOG(INFO) << "Uninitialized ComponentManager!";
 
@@ -51,6 +60,8 @@ DWORD WINAPI MainThread(LPVOID)
 		LOG(INFO) << "Uninitialized FileManager!";
 
 		std::this_thread::sleep_for(100ms); /*make sure everything is uninitialized*/
+
+		LOG(INFO) << "Dettaching";
 
 		g_Log->Uninitialize();
 		g_Log.reset();

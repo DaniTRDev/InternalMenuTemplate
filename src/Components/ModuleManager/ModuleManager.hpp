@@ -13,6 +13,9 @@ namespace change_me
 		Module(std::string_view Name);
 		Module();
 
+		bool TryGetModule();
+		bool IsModuleLoaded();
+
 		std::string_view GetName();
 
 		std::size_t GetBase();
@@ -51,7 +54,7 @@ namespace change_me
 
 		std::vector<std::shared_ptr<Module>> m_Modules;
 
-	};
+	}; extern std::shared_ptr<ModuleManager> g_ModuleManager;
 
 }
 
