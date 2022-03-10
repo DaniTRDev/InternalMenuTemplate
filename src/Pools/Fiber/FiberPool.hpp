@@ -2,60 +2,60 @@
 
 namespace change_me
 {
+	class FiberPool;
+
 	class FiberBase
 	{
 	public:
 		friend class FiberPool;
 		using FiberFunc_t = void();
 
-		FiberBase(FiberFunc_t* FiberFunc);
+		FiberBase(FiberFunc_t* FiberFunc, std::size_t Index = 0, std::string_view Name = "");
+		FiberBase();
 
 		void Run();
-		virtual void Unitialize() = 0;
-
-		void YieldFiber(std::chrono::high_resolution_clock::duration WakeAt);
+		void Sleep(std::chrono::high_resolution_clock::duration Time = 0ms);
 
 	private:
 
-		HANDLE m_MainFiber;
+		void SetFiberData(std::shared_ptr<FiberPool> ParentFiberPool, void* FiberHandle, std::size_t Index);
 
-		FiberFunc_t* m_FiberFunc;
+	private:
+		std::string_view m_Name;
+		std::size_t m_Index;
 
 		std::chrono::high_resolution_clock::time_point m_WakeAt;
+
+		void* m_FiberHndl;
+		FiberFunc_t* m_FiberFunc;
+
+		std::shared_ptr<FiberPool> m_ParentFiberPool;
+
 	};
 
-	class FiberPool
+	class FiberPool /*we can have multiple fiber pools for multiple threads*/
 	{
 	public:
 
-		void CreateFiber(std::shared_ptr<FiberBase> Fiber)
-		{
-			if (!m_MainFiber)
-				m_MainFiber = ConvertThreadToFiber(nullptr); /*convert our current thread to a fiber*/
+		friend class FiberBase;
 
-			auto FiberHandle = ::CreateFiber(0, [](void* LpParam) 
-				{		
-					auto CastedFiber = static_cast<FiberBase*>(LpParam);
-					
-					CastedFiber->Run();
-					CastedFiber->Unitialize();
-				}, Fiber.get());
-		}
-		void RunTick()
-		{
-			for (auto& Fiber : m_Fibers)
-			{
-				Fiber.second->m_MainFiber = GetCurrentFiber();
+		FiberPool();
 
-				if (Fiber.second->m_WakeAt <= std::chrono::high_resolution_clock::now())
-					SwitchToFiber(Fiber.first);
-			}
-		}
+		void CreateFiber(std::shared_ptr<FiberBase> Fiber);
+		void DeleteFiber(std::size_t Index);
 
-	private:
+		void Run();
+		void Uninitialize();
 
-		std::map<HANDLE, std::shared_ptr<FiberBase>> m_Fibers;
-		HANDLE m_MainFiber;
+		std::shared_ptr<FiberBase> GetCurrent();
+		std::shared_ptr<FiberBase> GetFiber(std::size_t Index);
+
+	public:
+
+		HANDLE m_MainFiber; /*just use to put other fibers to sleep*/
+		std::shared_ptr<FiberBase> m_CurrentFiber;
+
+		std::map<std::size_t, std::shared_ptr<FiberBase>> m_Fibers;
+
 	};
 }
-
