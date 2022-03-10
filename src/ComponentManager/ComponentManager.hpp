@@ -50,8 +50,6 @@ namespace change_me
 		std::vector<std::shared_ptr<ComponentBase>> m_Components;
 		std::mutex m_Mutex; 
 
-		std::int64_t m_CurrentComponent;
-
 		bool m_Initialized;
 
 	}; extern std::shared_ptr<ComponentManager> g_ComponentMgr; 
