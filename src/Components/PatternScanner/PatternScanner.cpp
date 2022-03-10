@@ -32,7 +32,7 @@ namespace change_me
 
 			if (m_PatternStr[i] == '?')
 			{
-				if (m_PatternStr[i + 1] == '?')
+				if (m_PatternStr[i + std::uint64_t(1)] == '?')
 					i++;
 
 				m_PatternBytes.push_back(0); /*we don't take care of wildcards*/
@@ -40,7 +40,7 @@ namespace change_me
 				continue;
 			}
 
-			char Bytes[] = { m_PatternStr[i], m_PatternStr[i + 1] }; /*store the 2bytes in a single char*/
+			char Bytes[] = { m_PatternStr[i], m_PatternStr[i + std::uint64_t(1)] }; /*store the 2bytes in a single char*/
 
 			auto ConvertedBytes = strtoull(Bytes, nullptr, 16);
 
