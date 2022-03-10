@@ -3,6 +3,7 @@
 #include <Windows.h>
 
 #include <chrono>
+using namespace std::chrono_literals;
 
 #include <exception>
 
@@ -26,6 +27,7 @@
 #include <MinHook.h>
 
 #include <imgui.h>
+#include <misc/cpp/imgui_stdlib.h>
 #include <backends/imgui_impl_win32.h>
 #include <backends/imgui_impl_dx11.h>
 
@@ -40,7 +42,7 @@
 
 #include "FileManager/File.hpp"
 #include "FileManager/Folder.hpp"
-#include "FileManager/FileManager.hpp"
+#include "FileManager/FileManager.hpp" /*the file manager should't be modidified at all*/
 
 #include "Logger.hpp" /*logger should not be modified very often*/
 
@@ -51,7 +53,12 @@
 
 #include "Components/PatternScanner/PatternScanner.hpp" /*same with the pattern scanner*/
 
-#include "Components/Hooking/Hook.hpp"
+#include "Components/Hooking/Hook.hpp" /*this MUST not be modified to avoid conflicts*/
+
+#include "Components/Renderer/AnimationManager/AnimationManager.hpp" /*AnimationManager should not be modified very often*/
+#include "Components/Renderer/AnimationManager/Animations/NotificationManager.hpp"
+
+#include "Components/Renderer/Renderer.hpp" /*renderer should not be modified very often, but Menu should*/
 
 namespace change_me
 {
@@ -63,7 +70,11 @@ namespace change_me
 	extern HANDLE		g_MainThread;
 	extern DWORD		g_MainThreadId;
 
+	extern std::string_view g_CheatName;
+
 	extern std::string_view g_GameModuleName; /*for ex: GoW.exe || GTA5.exe */
+	extern std::shared_ptr<FiberPool> g_GameFiberPool; /*only used for games that have some short of VM
+													   and you must call functions with a specific context*/
 
 	extern std::uintptr_t** GetSwapChainTable();
 }
