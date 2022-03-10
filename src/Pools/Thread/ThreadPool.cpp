@@ -51,8 +51,6 @@ namespace change_me
 		auto Handle = ::CreateThread(nullptr, 0, [](void* LpParam) -> DWORD
 			{
 
-				g_ThreadPool->m_CurrentThread = GetCurrentThread();
-
 				auto CastedThread = static_cast<ThreadPoolBase*>(LpParam);
 				CastedThread->Run(); /*inside this function there's a while*/
 
@@ -72,6 +70,8 @@ namespace change_me
 			{
 				Thread.second->Unitialize();
 				TerminateThread(Thread.first, S_OK);
+
+				m_Threads.erase(Thread.first);
 			}
 		}
 		
@@ -94,6 +94,8 @@ namespace change_me
 			Thread.second->Unitialize();
 			TerminateThread(Thread.first, S_OK);
 		}
+
+		m_Threads.clear();
 	}
 
 }
