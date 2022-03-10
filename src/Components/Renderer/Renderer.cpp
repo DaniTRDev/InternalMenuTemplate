@@ -38,6 +38,15 @@ namespace change_me
 		}
 		LOG(INFO) << "Initialized ImGui::DX11";
 
+		auto FontFile = g_FileManager->GetProjectFolder("GUI").GetFile("Fredoka.ttf");
+
+		if (FontFile.DoesFileExist())
+			ImGui::GetIO().Fonts->AddFontFromFileTTF(FontFile.GetPath().string().c_str(), 20.f);
+
+
+		g_AnimationManager = std::make_shared<AnimationManager>();
+		m_Notifications = std::make_shared<NotificationManager>();
+
 		m_Initialized = true;
 
 		return true;
@@ -51,6 +60,11 @@ namespace change_me
 	{
 		if (m_RenderTarget && m_BlendState)
 		{
+			m_Notifications->ClearNotifications();
+
+			g_AnimationManager->ClearAnimationQueue();
+			g_AnimationManager.reset();
+
 			ImGui_ImplDX11_Shutdown();
 			ImGui_ImplWin32_Shutdown();
 			ImGui::DestroyContext();
@@ -73,15 +87,46 @@ namespace change_me
 			ImGui::NewFrame();
 		}
 	}
+
+	std::string Tittle;
+	std::string Text;
+
 	void Renderer::Render()
 	{
-		if (m_Initialized && m_Open)
+		if (m_Initialized)
 		{
-			if (ImGui::Begin("asda"))
+			static std::once_flag Flag;
+
+			std::call_once(Flag, [&] 
+				{
+					m_Notifications->PushNotification(g_CheatName.data(), "Menu correctly initialized!");
+				});
+
+			if (m_Open)
 			{
-				ImGui::Button("asd");
-				ImGui::End();
+				if (ImGui::Begin("asda"))
+				{
+					ImGui::InputText("Notification Tittle", &Tittle);
+					ImGui::InputText("Notification Text", &Text);
+
+					
+
+					if(ImGui::Button("Send Notification"))
+					{
+						m_Notifications->PushNotification("MyLongDickVTurbo43", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis bibendum nulla eros, nec euismod dui pulvinar eu. Nullam facilisis justo eget ante blandit eleifend. Quisque at purus justo. Quisque justo velit, dignissim vitae placerat nec, gravida quis quam. Integer vel est lectus. Integer eget rhoncus lacus. In metus leo, porttitor sed pulvinar id, aliquam nec odio. Pellentesque tempor, tellus in consectetur congue, e");
+					}
+
+				} ImGui::End();
 			}
+
+			if (ImGui::Begin("##NotificationWindow", nullptr,
+				ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground
+				| ImGuiWindowFlags_NoMove)) /*create an invisible window for the animations*/
+			{
+				m_Notifications->Run();
+				g_AnimationManager->Run();
+			
+			} ImGui::End();
 		}
 	}
 	void Renderer::EndFrame()
