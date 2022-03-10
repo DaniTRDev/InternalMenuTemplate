@@ -18,4 +18,10 @@ namespace change_me
 	{
 		return m_FilePath;
 	}
+
+	bool File::DoesFileExist()
+	{
+		struct stat buffer;
+		return (stat(m_FilePath.string().c_str(), &buffer) == 0);
+	}
 }
