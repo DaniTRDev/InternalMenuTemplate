@@ -8,11 +8,11 @@ using namespace change_me;
 DWORD WINAPI MainThread(LPVOID)
 {
 	std::filesystem::path baseDir = std::getenv("appdata");
-	baseDir /= "InternalModMenu";
+	baseDir /= g_CheatName.data();
 
 	g_FileManager = FileManager::GetInstance(baseDir);
 
-	g_Log = Logger::GetInstance("InternalModMenu", g_FileManager->GetProjectFile("cout.log"));
+	g_Log = Logger::GetInstance(g_CheatName, g_FileManager->GetProjectFile("cout.log"));
 	g_Log->Initialize();
 
 	g_GameModuleName = "GoW.exe";
@@ -41,7 +41,7 @@ DWORD WINAPI MainThread(LPVOID)
 			if (GetAsyncKeyState(VK_INSERT) & 0x1)
 				g_Running = false;
 
-			std::this_thread::sleep_for(100ms);
+			std::this_thread::sleep_for(1ms);
 		}
 
 		LOG(INFO) << "Uninitializing...";

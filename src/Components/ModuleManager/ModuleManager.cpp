@@ -13,7 +13,9 @@ namespace change_me
 
 	bool Module::TryGetModule()
 	{
-		if (m_Base = std::uintptr_t(GetModuleHandleA(m_Name.data())), m_Base == 0)
+		m_Base = std::uintptr_t(GetModuleHandleA(m_Name.data()));
+
+		if (m_Base == 0)
 			return false;
 
 		auto DosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(m_Base);
@@ -41,7 +43,7 @@ namespace change_me
 	}
 	std::size_t Module::GetSize()
 	{
-		return Module::m_Size;
+		return m_Size;
 	}
 	std::size_t Module::GetEnd()
 	{

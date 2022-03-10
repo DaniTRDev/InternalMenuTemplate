@@ -15,7 +15,7 @@ namespace change_me
 				Sleep(1);
 			}
 		
-		}, "ComponentManager"), m_Initialized(false), m_CurrentComponent(-1)
+		}, "ComponentManager"), m_Initialized(false)
 		{}
 
 	void ComponentManager::Unitialize()
@@ -124,11 +124,8 @@ namespace change_me
 
 	void ComponentManager::RunComponents() /*used for tick*/
 	{
-		m_Mutex.lock();
-		m_CurrentComponent = -1;
 		for (auto& Comp : m_Components)
 		{
-			m_CurrentComponent++;
 
 			if (!Comp->m_Initialized)
 				continue;
@@ -146,7 +143,6 @@ namespace change_me
 			else if (Comp->GetType() == ComponentType::NeedsTickOnce)
 				Comp->m_Type = ComponentType::NoNeedsTick;
 		}
-		m_Mutex.unlock();
 	}
 	void ComponentManager::UninitializeComponents()
 	{

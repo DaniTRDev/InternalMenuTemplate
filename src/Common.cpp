@@ -9,7 +9,10 @@ namespace change_me
 	HANDLE		g_MainThread{};
 	DWORD		g_MainThreadId{};
 
+	std::string_view g_CheatName = "InternalMenuTemplate";
+
 	std::string_view g_GameModuleName;
+	std::shared_ptr<FiberPool> g_GameFiberPool;
 
 	std::uintptr_t** GetSwapChainTable()
 	{

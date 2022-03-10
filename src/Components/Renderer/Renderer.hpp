@@ -7,7 +7,7 @@ namespace change_me
 	public:
 
 		Renderer();
-
+		
 		bool Initialize() override;
 		bool Run() override;
 		bool Uninitialize() override;
@@ -33,6 +33,8 @@ namespace change_me
 	private:
 
 		bool m_Open;
+
+		std::shared_ptr<NotificationManager> m_Notifications;
 
 	private:
 

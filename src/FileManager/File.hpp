@@ -12,6 +12,8 @@ namespace change_me
 
 		const std::filesystem::path GetPath() const;
 
+		bool DoesFileExist();
+
 	protected:
 		File(std::shared_ptr<FileManager> FileManager, std::filesystem::path FilePath);
 
