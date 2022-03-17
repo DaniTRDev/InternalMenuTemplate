@@ -384,7 +384,7 @@ namespace change_me
 			this->OnFinalPtr = [&](PointerMath& Ptr)
 			{
 				this->m_VHook->CreateHook(Ptr);
-				this->m_VHook->EnableHook();
+				g_ComponentMgr->GetComponent<Hooking>("Hooking")->m_Hooks.push_back(this->m_VHook);
 			};
 		}
 

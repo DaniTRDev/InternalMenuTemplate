@@ -55,6 +55,7 @@ namespace change_me
 				return reinterpret_cast<T>(PtrAddr);
 
 			LOG(WARNING) << "The pointer " << this->GetName() << " isn't initialised!";
+			return nullptr;
 		}
 	};
 

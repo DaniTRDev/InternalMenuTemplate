@@ -2,6 +2,7 @@
 #include "Components/Pointers/Pointers.hpp"
 #include "Components/Hooking/Hooking.hpp"
 #include "Renderer.hpp"
+#include "Menu/Main.hpp" /*this one will also include other menuses*/
 
 namespace change_me
 {
@@ -9,7 +10,7 @@ namespace change_me
 
 	Renderer::Renderer() : ComponentBase("Renderer", ComponentType::NeedsTick), m_Open(false), m_Device(nullptr),
 		m_DeviceContext(nullptr), m_SwapChain(nullptr), m_RenderTarget(nullptr),
-		m_BlendState(nullptr), m_BlendColor()
+		m_BlendState(nullptr), m_BlendColor(), m_OpenTimer(200ms)
 	{}
 
 	bool Renderer::Initialize()
@@ -45,7 +46,9 @@ namespace change_me
 
 
 		g_AnimationManager = std::make_shared<AnimationManager>();
-		m_Notifications = std::make_shared<NotificationManager>();
+		m_Notifications = std::make_unique<NotificationManager>();
+
+		m_UIManager = std::make_shared<UIManager>();
 
 		m_Initialized = true;
 
@@ -60,6 +63,8 @@ namespace change_me
 	{
 		if (m_RenderTarget && m_BlendState)
 		{
+			m_UIManager.reset();
+
 			m_Notifications->ClearNotifications();
 
 			g_AnimationManager->ClearAnimationQueue();
@@ -71,6 +76,8 @@ namespace change_me
 
 			m_RenderTarget->Release();
 			m_BlendState->Release();
+
+			m_Initialized = false;
 		}
 
 		return true;
@@ -96,25 +103,24 @@ namespace change_me
 		if (m_Initialized)
 		{
 			static std::once_flag Flag;
-
 			std::call_once(Flag, [&] 
 				{
+					MainMenu(m_UIManager.get());
 					m_Notifications->PushNotification(g_CheatName.data(), "Menu correctly initialized!");
 				});
 
+			if (ImGui::IsKeyDown(ImGuiKey_KeypadMultiply) && m_OpenTimer.OnUpdate())
+				m_Open ^= true;
+
 			if (m_Open)
 			{
-				if (ImGui::Begin("asda"))
+				if (ImGui::Begin("##MainWindow", nullptr, ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground
+					| ImGuiWindowFlags_NoMove))
 				{
-					ImGui::InputText("Notification Tittle", &Tittle);
-					ImGui::InputText("Notification Text", &Text);
+					ImGui::SetWindowPos(ImVec2(0, 0));
+					ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
-					
-
-					if(ImGui::Button("Send Notification"))
-					{
-						m_Notifications->PushNotification("MyLongDickVTurbo43", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis bibendum nulla eros, nec euismod dui pulvinar eu. Nullam facilisis justo eget ante blandit eleifend. Quisque at purus justo. Quisque justo velit, dignissim vitae placerat nec, gravida quis quam. Integer vel est lectus. Integer eget rhoncus lacus. In metus leo, porttitor sed pulvinar id, aliquam nec odio. Pellentesque tempor, tellus in consectetur congue, e");
-					}
+					m_UIManager->Render();
 
 				} ImGui::End();
 			}
@@ -146,13 +152,9 @@ namespace change_me
 		if (!m_Initialized)
 			return false;
 
-		if (Msg == WM_KEYDOWN)
-		{
-			if (std::uint32_t(wParam) == VK_MULTIPLY)
-				m_Open = !m_Open;
-		}
+		m_UIManager->OnInput(Msg, std::uint32_t(wParam), lParam);/*make our menu update the inputs too*/
 
-		return ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
+		return ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);;
 	}
 
 	bool Renderer::SetD3DPointers(ID3D11Device* Device, ID3D11DeviceContext* DeviceContext, IDXGISwapChain* SwapChain)

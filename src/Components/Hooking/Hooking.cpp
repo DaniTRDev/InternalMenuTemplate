@@ -52,7 +52,7 @@ namespace change_me
 		{
 			static std::once_flag Flag;
 
-			if (m_Hooks.size() != 0) /*a quick way of checking if all hooks are added to the queue*/
+			if (m_Hooks.size() != 0) /*a quick way of checking the hook queue system is initialized*/
 			{
 				std::call_once(Flag, [&]
 					{

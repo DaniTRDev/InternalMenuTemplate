@@ -35,6 +35,7 @@ using namespace std::chrono_literals;
 #include <g3log/loglevels.hpp>
 #include <g3log/logworker.hpp>
 
+#include "Timer.hpp"
 #include "Memory/PointerMath.hpp"
 
 #include "Pools/Thread/ThreadPool.hpp" /*pools shouldn't be modified*/
@@ -58,6 +59,13 @@ using namespace std::chrono_literals;
 #include "Components/Renderer/AnimationManager/AnimationManager.hpp" /*AnimationManager should not be modified very often*/
 #include "Components/Renderer/AnimationManager/Animations/NotificationManager.hpp"
 
+#include "UIManager/OptionBase/OptionBase.hpp" /*should not be modified*/
+#include "UIManager/Widgets/BoolWidget.hpp"
+#include "UIManager/Widgets/NumberWidget.hpp"
+
+#include "UIManager/SubMenu.hpp" /*this should not be changed*/
+#include "UIManager/UIManager.hpp" /*should not be modified*/
+
 #include "Components/Renderer/Renderer.hpp" /*renderer should not be modified very often, but Menu should*/
 
 namespace change_me
@@ -77,4 +85,6 @@ namespace change_me
 													   and you must call functions with a specific context*/
 
 	extern std::uintptr_t** GetSwapChainTable();
+
+	extern std::uint32_t Joaat(std::string_view Str);
 }

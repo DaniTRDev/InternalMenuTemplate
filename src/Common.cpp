@@ -75,4 +75,20 @@ namespace change_me
 
 		return SwapTable;
 	}
+
+	std::uint32_t Joaat(std::string_view Str)
+	{
+		std::uint32_t Hash = 0;
+		for (auto Char : Str)
+		{
+			Hash += Char;
+			Hash += (Hash << 10);
+			Hash ^= (Hash >> 6);
+		}
+		Hash += (Hash << 3);
+		Hash ^= (Hash >> 11);
+		Hash += (Hash << 15);
+
+		return Hash;
+	}
 }
