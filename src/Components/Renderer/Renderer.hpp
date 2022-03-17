@@ -32,9 +32,11 @@ namespace change_me
 
 	private:
 
+		Timer m_OpenTimer;
 		bool m_Open;
 
-		std::shared_ptr<NotificationManager> m_Notifications;
+		std::unique_ptr<NotificationManager> m_Notifications;
+		std::shared_ptr<UIManager> m_UIManager;
 
 	private:
 
