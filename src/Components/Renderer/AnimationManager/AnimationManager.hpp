@@ -18,8 +18,8 @@ namespace change_me
 
 	private:
 
-		std::chrono::high_resolution_clock::duration m_AnimationTime;
-		std::chrono::high_resolution_clock::time_point m_InternalDelta;
+		std::chrono::high_resolution_clock::duration m_Time;
+		bool m_IsTimerInitialized;
 
 		AnimationFunc_t m_Update;
 	};
@@ -36,7 +36,7 @@ namespace change_me
 
 	private:
 
-		std::vector<std::shared_ptr<AnimationBase>> m_Animations;
+		std::vector<std::pair<Timer, std::shared_ptr<AnimationBase>>> m_Animations;
 
 	}; extern std::shared_ptr<AnimationManager> g_AnimationManager;
 }

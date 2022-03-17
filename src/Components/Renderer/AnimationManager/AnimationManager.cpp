@@ -5,8 +5,7 @@ namespace change_me
 	std::shared_ptr<AnimationManager> g_AnimationManager;
 
 	AnimationBase::AnimationBase(AnimationFunc_t Update,
-		std::chrono::high_resolution_clock::duration Time) :
-		m_AnimationTime(Time), m_InternalDelta(std::chrono::high_resolution_clock::now()), m_Update(Update)
+		std::chrono::high_resolution_clock::duration Time) : m_Time(Time), m_Update(Update)
 	{
 
 	}
@@ -18,30 +17,31 @@ namespace change_me
 
 	void AnimationManager::Run()
 	{
-		auto CurDelta = std::chrono::high_resolution_clock::now();
-
 		for (auto i = 0; i < m_Animations.size(); i++)
 		{
 			auto& Animation = m_Animations[i];
 
-			if ((CurDelta.time_since_epoch() - Animation->m_InternalDelta.time_since_epoch()).count() >= Animation->m_AnimationTime.count())
+			if (!Animation.second->m_IsTimerInitialized)
+			{
+				Animation.first.UpdateInternalTime();
+				Animation.first.OnUpdate();
+
+				Animation.second->m_IsTimerInitialized = true;
+			}
+			else if (Animation.first.OnUpdate() && Animation.second->m_IsTimerInitialized)
 			{
 				m_Animations.erase(m_Animations.begin() + i);
 				continue;
 			}
-			auto DeltaTime = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>
-				(CurDelta.time_since_epoch() - Animation->m_InternalDelta.time_since_epoch()).count();
+			
 
-			auto CastedTotalDelta = 
-				std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(Animation->m_AnimationTime).count();
-
-			Animation->OnUpdate(DeltaTime / CastedTotalDelta);
+			Animation.second->OnUpdate(Animation.first.GetDeltaFromDelay());
 		}
 	}
 
 	void AnimationManager::PushNewAnimation(std::shared_ptr<AnimationBase> Anim)
 	{
-		m_Animations.push_back(Anim);
+		m_Animations.push_back(std::make_pair(Timer(Anim->m_Time), Anim));
 	}
 
 	void AnimationManager::ClearAnimationQueue()

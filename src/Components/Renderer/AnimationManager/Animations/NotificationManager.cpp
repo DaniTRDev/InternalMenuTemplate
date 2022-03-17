@@ -11,7 +11,6 @@ namespace change_me
 		auto NotificationAnim = std::make_shared<AnimationBase>( 
 				[this, Tittle, Text](float CurrentDelta) mutable
 			{
-
 				ImGui::SetWindowPos(ImVec2(0, 0));
 				ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 				
