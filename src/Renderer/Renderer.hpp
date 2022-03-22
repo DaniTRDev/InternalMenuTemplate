@@ -2,15 +2,14 @@
 
 namespace change_me
 {
-	class Renderer : public ComponentBase
+	class Renderer
 	{
 	public:
 
 		Renderer();
 		
-		bool Initialize() override;
-		bool Run() override;
-		bool Uninitialize() override;
+		void Initialize();
+		void Uninitialize();
 
 	public:
 
@@ -36,7 +35,8 @@ namespace change_me
 		bool m_Open;
 
 		std::unique_ptr<NotificationManager> m_Notifications;
-		std::shared_ptr<UIManager> m_UIManager;
+
+		bool m_Initialized;
 
 	private:
 

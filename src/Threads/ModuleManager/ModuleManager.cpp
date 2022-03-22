@@ -55,7 +55,22 @@ namespace change_me
 		return PointerMath(std::uintptr_t(GetProcAddress(HMODULE(m_Base), Name.data())));
 	}
 
-	ModuleManager::ModuleManager() : ComponentBase("ModuleManager", ComponentType::NeedsTick)
+	ModuleManager::ModuleManager() : 
+		ThreadPoolBase(
+			[](void* Param) 
+				{
+					auto ModuleMgr = reinterpret_cast<ModuleManager*>(Param);
+					ModuleMgr->Initialize();
+
+					g_ThreadPool->OnThreadEvent(ModuleMgr->m_ThreadHandle, ThreadEvent::ThreadEvent_Initialized);
+
+					while (ModuleMgr->m_Initialized)
+					{
+						ModuleMgr->Run();
+						Sleep(1);
+					}
+
+				}, this, "ModuleManager")
 	{
 
 	}
@@ -73,9 +88,7 @@ namespace change_me
 
 	bool ModuleManager::Initialize()
 	{
-		g_ModuleManager = g_ComponentMgr->GetComponent<ModuleManager>("ModuleManager");
 		m_Initialized = true;
-
 		return true; 
 	}
 	bool ModuleManager::Run()
@@ -90,13 +103,13 @@ namespace change_me
 		}
 		return true;
 	}
-	bool ModuleManager::Uninitialize()
+	void ModuleManager::UnitializeThread()
 	{
-		m_Modules.clear();
-
-		m_Initialized = false;
-
-		return true;
+		if (m_Initialized)
+		{
+			m_Modules.clear();
+			m_Initialized = false;
+		}
 	}
 
 	std::shared_ptr<Module> ModuleManager::GetModule(std::string_view Name)

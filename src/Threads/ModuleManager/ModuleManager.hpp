@@ -34,7 +34,7 @@ namespace change_me
 		std::uintptr_t m_Size;
 	};
 
-	class ModuleManager : public ComponentBase
+	class ModuleManager : public ThreadPoolBase
 	{
 	public:
 
@@ -42,9 +42,10 @@ namespace change_me
 
 		void AddModule(std::shared_ptr<Module> Mod);
 
-		bool Initialize() override;
-		bool Run() override;
-		bool Uninitialize() override;
+		bool Initialize();
+		bool Run();
+
+		void UnitializeThread() override;
 
 		/*full name (+ extension), ex: d3d11.dll*/
 

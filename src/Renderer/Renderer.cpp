@@ -1,6 +1,6 @@
 #include "Common.hpp"
-#include "Components/Pointers/Pointers.hpp"
-#include "Components/Hooking/Hooking.hpp"
+#include "Threads/Pointers/Pointers.hpp"
+#include "Threads/Hooking/Hooking.hpp"
 #include "Renderer.hpp"
 #include "Menu/Main.hpp" /*this one will also include other menuses*/
 
@@ -8,19 +8,19 @@ namespace change_me
 {
 	std::shared_ptr<Renderer> g_Renderer;
 
-	Renderer::Renderer() : ComponentBase("Renderer", ComponentType::NeedsTick), m_Open(false), m_Device(nullptr),
+	Renderer::Renderer() : m_Open(false), m_Device(nullptr),
 		m_DeviceContext(nullptr), m_SwapChain(nullptr), m_RenderTarget(nullptr),
 		m_BlendState(nullptr), m_BlendColor(), m_OpenTimer(200ms)
 	{}
 
-	bool Renderer::Initialize()
+	void Renderer::Initialize()
 	{
 
-		while ((!m_Device) || (!m_DeviceContext)) /*this will be called from our component manager thread*/
+		while ((!m_Device) || (!m_DeviceContext)) 
 			Sleep(1); /*this is a check to ensure we passed the pointers throught SetD3DPtrs*/
 
 		if ((!CreateRenderTarget()) || (!CreateBlendState()))
-			return false;
+			return;
 
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
@@ -28,14 +28,14 @@ namespace change_me
 		if (!ImGui_ImplWin32_Init(g_Pointers->m_Hwnd))
 		{
 			LOG(WARNING) << "Couldn't initialize ImGui::Win32!";
-			return false;
+			return;
 		}
 		LOG(INFO) << "Initialized ImGui::Win32";
 
 		if (!ImGui_ImplDX11_Init(m_Device, m_DeviceContext))
 		{
 			LOG(WARNING) << "Couldn't initialize ImGui::Dx11!";
-			return false;
+			return;
 		}
 		LOG(INFO) << "Initialized ImGui::DX11";
 
@@ -48,23 +48,14 @@ namespace change_me
 		g_AnimationManager = std::make_shared<AnimationManager>();
 		m_Notifications = std::make_unique<NotificationManager>();
 
-		m_UIManager = std::make_shared<UIManager>();
-
 		m_Initialized = true;
 
-		return true;
+		return;
 	}
-	bool Renderer::Run()
-	{
-		/*maily used to save & get variables from gui, such as colors....*/
-		return true;
-	}
-	bool Renderer::Uninitialize()
+	void Renderer::Uninitialize()
 	{
 		if (m_RenderTarget && m_BlendState)
 		{
-			m_UIManager.reset();
-
 			m_Notifications->ClearNotifications();
 
 			g_AnimationManager->ClearAnimationQueue();
@@ -79,8 +70,6 @@ namespace change_me
 
 			m_Initialized = false;
 		}
-
-		return true;
 	}
 
 	void Renderer::NewFrame()
@@ -95,9 +84,6 @@ namespace change_me
 		}
 	}
 
-	std::string Tittle;
-	std::string Text;
-
 	void Renderer::Render()
 	{
 		if (m_Initialized)
@@ -105,7 +91,6 @@ namespace change_me
 			static std::once_flag Flag;
 			std::call_once(Flag, [&] 
 				{
-					MainMenu(m_UIManager.get());
 					m_Notifications->PushNotification(g_CheatName.data(), "Menu correctly initialized!");
 				});
 
@@ -119,8 +104,6 @@ namespace change_me
 				{
 					ImGui::SetWindowPos(ImVec2(0, 0));
 					ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
-
-					m_UIManager->Render();
 
 				} ImGui::End();
 			}
@@ -151,8 +134,6 @@ namespace change_me
 	{
 		if (!m_Initialized)
 			return false;
-
-		m_UIManager->OnInput(Msg, std::uint32_t(wParam), lParam);/*make our menu update the inputs too*/
 
 		return ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);;
 	}

@@ -4,11 +4,11 @@ namespace change_me
 {
 	std::shared_ptr<ThreadPool> g_ThreadPool;
 
-	ThreadPoolBase::ThreadPoolBase(ThreadFunc_t* ThreadFunc, std::string_view Name) : 
-		m_Name(Name), m_ThreadFunc(ThreadFunc)
+	ThreadPoolBase::ThreadPoolBase(ThreadFunc_t* ThreadFunc, void * Param, std::string_view Name) : 
+		m_Name(Name), m_ThreadFunc(ThreadFunc), m_Param(Param), m_ThreadHandle(0)
 		{}
 
-	ThreadPoolBase::ThreadPoolBase() : m_Name(""), m_ThreadFunc(nullptr)
+	ThreadPoolBase::ThreadPoolBase() : m_Name(""), m_ThreadFunc(nullptr), m_Param(nullptr), m_ThreadHandle(0)
 		{}
 
 	void ThreadPoolBase::Run()
@@ -17,7 +17,16 @@ namespace change_me
 		{
 			[this]()
 			{
-				m_ThreadFunc();
+				try
+				{
+					m_ThreadFunc(m_Param);
+				}
+				catch (std::exception& exp) /*c/cpp exceptions*/
+				{
+					LOG(WARNING) << "Cpp error at thread " << AddColorToStream(LogColor::YELLOW) << m_Name << ResetStreamColor << "\n\t Error: " << exp.what();
+					UnitializeThread();
+					TerminateThread(GetCurrentThread(), S_OK); /*this will terminate the thread, so it won't be executed again*/
+				}
 			}();
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER)
@@ -25,10 +34,14 @@ namespace change_me
 			[this]()
 			{
 				LOG(WARNING) << "Error at thread " << AddColorToStream(LogColor::YELLOW) << m_Name << ResetStreamColor;
-				Unitialize();
+				UnitializeThread();
 				TerminateThread(GetCurrentThread(), S_OK); /*this will terminate the thread, so it won't be executed again*/
 			}();
 		}
+	}
+	bool ThreadPoolBase::IsInitialized()
+	{
+		return m_Initialized;
 	}
 
 	std::shared_ptr<ThreadPool> ThreadPool::GetInstance()
@@ -52,6 +65,8 @@ namespace change_me
 			{
 
 				auto CastedThread = static_cast<ThreadPoolBase*>(LpParam);
+
+				CastedThread->m_ThreadHandle = OpenThread(THREAD_ALL_ACCESS, 0, GetCurrentThreadId());
 				CastedThread->Run(); /*inside this function there's a while*/
 
 				/*this will be only executed when the thread has finished working AT ALL*/
@@ -60,18 +75,19 @@ namespace change_me
 
 			}, Thread.get(), 0, 0);
 
-		m_Threads.insert( { Handle, Thread } );
+		m_Threads.push_back(Thread);
 	}
 	void ThreadPool::DestroyThread(std::string_view ThreadName)
 	{
-		for (auto Thread : m_Threads)
+		for (auto i = 0; i < m_Threads.size(); i++)
 		{
-			if (Thread.second->m_Name == ThreadName)
+			auto Thread = m_Threads[i];
+			if (Thread->m_Name == ThreadName)
 			{
-				Thread.second->Unitialize();
-				TerminateThread(Thread.first, S_OK);
+				Thread->UnitializeThread();
+				TerminateThread(Thread->m_ThreadHandle, S_OK);
 
-				m_Threads.erase(Thread.first);
+				m_Threads.erase(m_Threads.begin() + i);
 			}
 		}
 		
@@ -81,18 +97,54 @@ namespace change_me
 	{
 		for (auto& Thread : m_Threads)
 		{
-			if (Thread.second->m_Name == ThreadName)
-				return Thread.second;
+			if (Thread->m_Name == ThreadName)
+				return Thread;
 		}
 		return nullptr;
+	}
+	std::shared_ptr<ThreadPoolBase> ThreadPool::GetThread(HANDLE ThreadHandle)
+	{
+		for (auto& Thread : m_Threads)
+		{
+			if (Thread->m_ThreadHandle == ThreadHandle)
+				return Thread;
+		}
+		return nullptr;
+	}
+
+	void ThreadPool::AddThreadListener(std::shared_ptr<ThreadPoolBase> Thread, ThreadListener_t Listener)
+	{
+		/*we don't check if the thread is valid because it might has not been started yet*/
+		m_ThreadsListener.push_back(std::make_pair(Thread, Listener));
+	}
+	void ThreadPool::OnThreadEvent(HANDLE ThreadHndl, ThreadEvent Event)
+	{
+		auto Thread = GetThread(ThreadHndl);
+
+		for (auto& ThreadListener : m_ThreadsListener)
+		{
+			if (ThreadListener.first->m_ThreadHandle == ThreadHndl)
+				ThreadListener.second(Event);
+		}
 	}
 
 	void ThreadPool::Uninitialize()
 	{
 		for (auto& Thread : m_Threads)
 		{
-			Thread.second->Unitialize();
-			TerminateThread(Thread.first, S_OK);
+			LOG(INFO) << "Terminating thread " << AddColorToStream(LogColor::YELLOW) << Thread->m_Name << ResetStreamColor;
+			
+			Thread->UnitializeThread();
+			OnThreadEvent(Thread->m_ThreadHandle, ThreadEvent::ThreadEvent_Uninitialized);
+
+			for (auto i = 0; i < m_ThreadsListener.size(); i++)
+			{
+				if (m_ThreadsListener[i].first->m_ThreadHandle == Thread->m_ThreadHandle)
+					m_ThreadsListener.erase(m_ThreadsListener.begin() + 1);
+			}
+
+
+			TerminateThread(Thread->m_ThreadHandle, S_OK);
 		}
 
 		m_Threads.clear();

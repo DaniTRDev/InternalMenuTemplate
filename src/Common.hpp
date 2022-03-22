@@ -47,26 +47,17 @@ using namespace std::chrono_literals;
 
 #include "Logger.hpp" /*logger should not be modified very often*/
 
-#include "ComponentManager/ComponentBase.hpp" /*the component system should not even be modified*/
-#include "ComponentManager/ComponentManager.hpp"
+#include "Threads/ModuleManager/ModuleManager.hpp" /*same with module manager*/
 
-#include "Components/ModuleManager/ModuleManager.hpp" /*same with module manager*/
+#include "Threads/PatternScanner/Pattern.hpp"
+#include "Threads/PatternScanner/PatternScanner.hpp" /*same with the pattern scanner*/
 
-#include "Components/PatternScanner/PatternScanner.hpp" /*same with the pattern scanner*/
+#include "Threads/Hooking/Hook.hpp" /*this MUST not be modified to avoid conflicts*/
 
-#include "Components/Hooking/Hook.hpp" /*this MUST not be modified to avoid conflicts*/
+#include "Renderer/AnimationManager/AnimationManager.hpp" /*AnimationManager should not be modified very often*/
+#include "Renderer/AnimationManager/Animations/NotificationManager.hpp"
 
-#include "Components/Renderer/AnimationManager/AnimationManager.hpp" /*AnimationManager should not be modified very often*/
-#include "Components/Renderer/AnimationManager/Animations/NotificationManager.hpp"
-
-#include "UIManager/OptionBase/OptionBase.hpp" /*should not be modified*/
-#include "UIManager/Widgets/BoolWidget.hpp"
-#include "UIManager/Widgets/NumberWidget.hpp"
-
-#include "UIManager/SubMenu.hpp" /*this should not be changed*/
-#include "UIManager/UIManager.hpp" /*should not be modified*/
-
-#include "Components/Renderer/Renderer.hpp" /*renderer should not be modified very often, but Menu should*/
+#include "Renderer/Renderer.hpp" /*renderer should not be modified very often, but Menu should*/
 
 namespace change_me
 {

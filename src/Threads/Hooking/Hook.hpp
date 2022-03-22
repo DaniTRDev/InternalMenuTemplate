@@ -2,19 +2,15 @@
 
 namespace change_me
 {
-	class Hooking;
-	enum class HookType : std::uint16_t
-	{
-		Detour, 
-		VMT
-	};
+	class DHookWrapper {};
+	class VHookWrapper {};
 
 	class Hook
 	{
 	public:
 		friend class Hooking;
 
-		inline Hook(std::string_view Name, HookType Type) : m_Name(Name), m_Type(Type), m_Target(0),
+		inline Hook(std::string_view Name) : m_Name(Name), m_Target(0),
 			m_Created(false), m_Enabled(false)
 			{}
 
@@ -31,19 +27,25 @@ namespace change_me
 		PointerMath m_Target;
 
 		std::string_view m_Name;
-		HookType m_Type;
 
 		bool m_Created;
 		bool m_Enabled;
 	};
-
 	class DHook : public Hook
 	{
 	public:
 
-		inline DHook(std::string_view Name, void* Detour) : Hook(Name, HookType::Detour),
+		inline DHook(std::string_view Name, PointerMath Target, void* Detour) : Hook(Name),
 			m_Detour(PointerMath(std::uintptr_t(Detour))), m_Original(0)
-			{}
+		{
+			if (Target.As<std::uintptr_t>() == 0)
+			{
+				LOG(WARNING) << "Hook [" << AddColorToStream(LogColor::MAGENTA)
+					<< m_Name << ResetStreamColor << "] the target address is not valid!";
+				return;
+			}
+			m_Target = Target;
+		}
 
 		inline void CreateHook(PointerMath Target) override
 		{
@@ -51,12 +53,6 @@ namespace change_me
 			{
 				LOG(WARNING) << "Hook [" << AddColorToStream(LogColor::MAGENTA)
 					<< m_Name << ResetStreamColor << "] already created!";
-				return;
-			}
-			else if (Target.As<std::uintptr_t>() == 0)
-			{
-				LOG(WARNING) << "Hook [" << AddColorToStream(LogColor::MAGENTA)
-					<< m_Name << ResetStreamColor << "] the target address is not valid!";
 				return;
 			}
 			else if (m_Detour.As<std::uintptr_t>() == 0)
@@ -178,14 +174,21 @@ namespace change_me
 		PointerMath m_Detour;
 		PointerMath m_Original;
 	};
-
 	class VMTHook : public Hook
 	{
 	public:
 
-		inline VMTHook(std::string_view Name, std::size_t NumFuncs) : Hook(Name, HookType::VMT),
+		inline VMTHook(std::string_view Name, PointerMath Target, std::size_t NumFuncs) : Hook(Name),
 			m_NumFuncs(NumFuncs), m_OriginalTable(nullptr), m_NewTable(nullptr)
-		{}
+		{
+			if (Target.As<std::uintptr_t>() == 0)
+			{
+				LOG(WARNING) << "Hook [" << AddColorToStream(LogColor::MAGENTA)
+					<< m_Name << ResetStreamColor << "] the target address is not valid!";
+				return;
+			}
+			m_Target = Target;
+		}
 
 		inline void CreateHook(PointerMath Target) override
 		{
@@ -193,12 +196,6 @@ namespace change_me
 			{
 				LOG(WARNING) << "Hook [" << AddColorToStream(LogColor::MAGENTA)
 					<< m_Name << ResetStreamColor << "] already created";
-				return;
-			}
-			else if (Target.As<std::uintptr_t>() == 0)
-			{
-				LOG(WARNING) << "Hook [" << AddColorToStream(LogColor::MAGENTA)
-					<< m_Name << ResetStreamColor << "] the target address is not valid!";
 				return;
 			}
 			else if (m_NumFuncs == 0)
@@ -357,64 +354,86 @@ namespace change_me
 
 		std::size_t m_NumFuncs;
 	};
-	
-	class DHookWrapper {};
-	class VHookWrapper {};
 
-	template<typename T, typename U>
-	class HookWrapper :  public PatternImpl<U>
+	template<typename HookType, typename PtrCast>
+	class HookWrapper;
+
+	/*/////////////// PointerImpl /////////////////*/
+
+	extern void AddHook(std::shared_ptr<Hook> Hk); 
+	/*a little trick we are going to use to get rid out of the "g_Hooking not defined" error*/
+
+	template<typename PtrCast>
+	class HookWrapper<DHookWrapper, PtrCast> : public PointerImpl<PtrCast>
 	{
 	public:
 
-		template<typename = std::enable_if_t<std::is_same<T, DHookWrapper>::value>>
-		inline HookWrapper(std::string_view Pattern, std::string_view Name, void* Detour) : m_Hook(std::make_shared<DHook>(Name, Detour)),
-			PatternImpl<U>(Pattern, Name)
+		inline HookWrapper(std::string_view Name, std::uintptr_t Address, void* Detour) :
+			PointerImpl<PtrCast>(Name, Address)
 		{
-			this->OnFinalPtr = [&](PointerMath& Ptr)
-			{
-				this->m_Hook->CreateHook(Ptr);
-				g_ComponentMgr->GetComponent<Hooking>("Hooking")->m_Hooks.push_back(this->m_Hook);
-			};
+			m_Hook = std::make_shared<DHook>(Name, PointerMath(Address), Detour);
+			AddHook(m_Hook);
 		}
 
-		template<typename = std::enable_if_t<std::is_same<T, VHookWrapper>::value>>
-		inline HookWrapper(std::string_view Pattern, std::string_view Name, std::size_t NumFuncs) : m_VHook(std::make_shared<VMTHook>(Name, NumFuncs)),
-			PattermImpl<U>(Name, Pattern)
+		inline HookWrapper(std::string_view Name, PointerMath Address, void* Detour) :
+			PointerImpl<PtrCast>(Name, Address)
 		{
-			this->OnFinalPtr = [&](PointerMath& Ptr)
-			{
-				this->m_VHook->CreateHook(Ptr);
-				g_ComponentMgr->GetComponent<Hooking>("Hooking")->m_Hooks.push_back(this->m_VHook);
-			};
+			m_Hook = std::make_shared<DHook>(Name, Address, Detour);
+			AddHook(m_Hook);
 		}
 
-		template<typename = std::enable_if_t<std::is_same<T, DHookWrapper>::value>>
-		inline U Get()
-		{
-			return m_Hook->Get<U>();
-		}
+		inline HookWrapper() : PointerImpl<PtrCast>()
+		{}
 
-		template<typename = std::enable_if_t<std::is_same<T, VHookWrapper>::value>>
-		inline U Get(std::size_t Index)
+		PtrCast Get()
 		{
-			return m_VHook->Get<U>(Index);
-		}
-
-		template<typename = std::enable_if_t<std::is_same<T,VHookWrapper>::value>>
-		inline void SetupHook(std::size_t Index, void * VFunc, std::string_view Name)
-		{
-			m_VHook->SetupHook(Index, VFunc, Name);
-		}
-
-		template<typename = std::enable_if_t<std::is_same<T, VHookWrapper>::value>>
-		inline void UnSetupHook(std::size_t Index)
-		{
-			m_VHook->UnSetupHook(Index);
+			return m_Hook->Get<PtrCast>();
 		}
 
 	private:
 
-		std::shared_ptr<DHook> m_Hook;	
-		std::shared_ptr<VMTHook> m_VHook;
+		std::shared_ptr<DHook> m_Hook;
+	};
+
+	template<typename PtrCast>
+	class HookWrapper<VHookWrapper, PtrCast> : public PointerImpl<PtrCast>
+	{
+	public:
+
+		inline HookWrapper(std::string_view Name, std::uintptr_t Address, std::size_t NumFuncs) :
+			m_Hook(std::make_shared<VMTHook>(Name, NumFuncs)), PointerImpl<PtrCast>(Name, Address)
+		{
+			m_Hook = std::make_shared<VMTHook>(Name, PointerMath(Address), NumFuncs);
+			AddHook(m_Hook);
+		}
+
+		inline HookWrapper(std::string_view Name, PointerMath Address, std::size_t NumFuncs) :
+			m_Hook(std::make_shared<VMTHook>(Name, NumFuncs)), PointerImpl<PtrCast>(Name, Address)
+		{
+			m_Hook = std::make_shared<VMTHook>(Name, Address, NumFuncs);
+			AddHook(m_Hook);
+		}
+
+		inline HookWrapper() : PointerImpl<PtrCast>()
+		{}
+
+		inline PtrCast Get(std::size_t Index)
+		{
+			return m_Hook->Get<PtrCast>(Index);
+		}
+
+		inline void SetupHook(std::size_t Index, void* VFunc, std::string_view Name)
+		{
+			m_Hook->SetupHook(Index, VFunc, Name);
+		}
+
+		inline void UnSetupHook(std::size_t Index)
+		{
+			m_Hook->UnSetupHook(Index);
+		}
+
+	private:
+
+		std::shared_ptr<VMTHook> m_Hook;
 	};
 }
