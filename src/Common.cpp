@@ -1,5 +1,5 @@
 #include "Common.hpp"
-#include "Components/Pointers/Pointers.hpp"
+#include "Threads/Pointers/Pointers.hpp"
 
 namespace change_me
 {
@@ -33,8 +33,8 @@ namespace change_me
 			refreshRate.Denominator = 1;
 
 			DXGI_MODE_DESC bufferDesc;
-			bufferDesc.Width = *g_Pointers->m_Width->GetPtr();
-			bufferDesc.Height = *g_Pointers->m_Height->GetPtr();
+			bufferDesc.Width = *g_Pointers->m_Width.GetPtr();
+			bufferDesc.Height = *g_Pointers->m_Height.GetPtr();
 			bufferDesc.RefreshRate = refreshRate;
 			bufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			bufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;

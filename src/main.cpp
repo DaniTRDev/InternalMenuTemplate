@@ -1,7 +1,7 @@
 #include "Common.hpp"
-#include "Components/Pointers/Pointers.hpp"
-#include "Components/Hooking/Hook.hpp"
-#include "Components/Hooking/Hooking.hpp"
+#include "Threads/Pointers/Pointers.hpp"
+#include "Threads/Hooking/Hook.hpp"
+#include "Threads/Hooking/Hooking.hpp"
 
 using namespace change_me;
 
@@ -24,16 +24,18 @@ DWORD WINAPI MainThread(LPVOID)
 		g_ThreadPool = ThreadPool::GetInstance();
 		LOG(INFO) << "Initializing ThreadPool";
 
-		/*start with the components*/
-		g_ComponentMgr = ComponentManager::GetInstance();
-		LOG(INFO) << "Initializing ComponentManager";
+		g_ModuleManager = std::make_shared<ModuleManager>();
+		g_PatternScanner = std::make_shared<PatternScanner>();
+		g_Pointers = std::make_shared<Pointers>();
+		g_Hooking = std::make_shared<Hooking>();
+		g_Renderer = std::make_shared<Renderer>(); /*we initialize it here to avoid conflicts*/
 
-		g_ComponentMgr->AddComponent(std::make_shared<ModuleManager>());
-		g_ComponentMgr->AddComponent(std::make_shared<PatternScanner>());
-		g_ComponentMgr->AddComponent(std::make_shared<Pointers>());
-		g_ComponentMgr->AddComponent(std::make_shared<Hooking>());
+		/*start the threads*/
 
-		g_ThreadPool->CreateThread(std::static_pointer_cast<ThreadPoolBase>(g_ComponentMgr));
+		g_ThreadPool->CreateThread(g_ModuleManager);
+		g_ThreadPool->CreateThread(g_PatternScanner);
+		g_ThreadPool->CreateThread(g_Pointers);
+		g_ThreadPool->CreateThread(g_Hooking);
 
 		while (g_Running)
 		{
@@ -53,19 +55,20 @@ DWORD WINAPI MainThread(LPVOID)
 
 		LOG(INFO) << "Uninitialized ThreadPool!";
 
-		g_ComponentMgr.reset();
-		LOG(INFO) << "Uninitialized ComponentManager!";
+		g_Renderer->Uninitialize();
+		g_Renderer.reset();
+
+		LOG(INFO) << "Uninitialized Renderer!";
 
 		g_FileManager.reset();
 		LOG(INFO) << "Uninitialized FileManager!";
 
-		std::this_thread::sleep_for(100ms); /*make sure everything is uninitialized*/
-
 		LOG(INFO) << "Dettaching";
+
+		std::this_thread::sleep_for(1000ms); /*make sure everything is uninitialized*/
 
 		g_Log->Uninitialize();
 		g_Log.reset();
-
 	}
 	catch (const std::exception& ex)
 	{
