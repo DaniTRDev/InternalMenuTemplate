@@ -77,3 +77,5 @@ private:
 Use .cpp and .hpp
 
 Use the same name as your class names eg. ClassName => ClassName.hpp / ClassName.cpp
+
+## Thanks to https://github.com/Yimura for this incredible readme and the start up files of the base.
