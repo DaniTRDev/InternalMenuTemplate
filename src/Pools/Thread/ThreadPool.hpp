@@ -6,21 +6,37 @@ namespace change_me
 	{
 	public:
 		friend class ThreadPool;
-		using ThreadFunc_t = void();
+		using ThreadFunc_t = void(void*);
 
-		ThreadPoolBase(ThreadFunc_t* ThreadFunc, std::string_view Name);
+		ThreadPoolBase(ThreadFunc_t* ThreadFunc, void * Param, std::string_view Name);
 
 		ThreadPoolBase();
 
 		void Run();
+		virtual void UnitializeThread() = 0;
 
-		virtual void Unitialize() = 0;
+		bool IsInitialized();
 
-	private:
+		HANDLE m_ThreadHandle;
 		std::string_view m_Name;
 
-		ThreadFunc_t* m_ThreadFunc;
+	private:
 
+		ThreadFunc_t* m_ThreadFunc;
+		void* m_Param;
+
+	protected:
+
+		bool m_Initialized;
+
+	};
+
+	enum class ThreadEvent
+	{
+		ThreadEvent_Initialized,
+		ThreadEvent_CouldntInitialize,
+
+		ThreadEvent_Uninitialized,
 	};
 
 	class ThreadPool
@@ -35,12 +51,19 @@ namespace change_me
 		void Uninitialize();
 
 		std::shared_ptr<ThreadPoolBase> GetThread(std::string_view ThreadName);
+		std::shared_ptr<ThreadPoolBase> GetThread(HANDLE ThreadHandle);
+
+		using ThreadListener_t = std::function<void(ThreadEvent Event)>;
+		void AddThreadListener(std::shared_ptr<ThreadPoolBase> Thread, ThreadListener_t Listener);
+
+		void OnThreadEvent(HANDLE ThreadHndl, ThreadEvent Event);
 
 	public:
 
 		HANDLE m_CurrentThread;
 
-		std::map<HANDLE, std::shared_ptr<ThreadPoolBase>> m_Threads;
+		std::vector<std::shared_ptr<ThreadPoolBase>> m_Threads;
+		std::vector<std::pair<std::shared_ptr<ThreadPoolBase>, ThreadListener_t>> m_ThreadsListener;
 
 	};  extern std::shared_ptr<ThreadPool> g_ThreadPool;
 }
