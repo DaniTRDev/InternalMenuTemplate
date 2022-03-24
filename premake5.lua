@@ -116,6 +116,7 @@ workspace "InternalModMenu"
     project "json"
         location "vendor/%{prj.name}"
         kind "None"
+        language "C++"
 
         files {
             "vendor/%{prj.name}/include/nlohmann/**.hpp",
@@ -133,6 +134,7 @@ workspace "InternalModMenu"
 			"vendor/minhook/include",
 			"vendor/imgui",
             "vendor/stb",
+            "vendor/json/include",
             "src/"
         }
 
