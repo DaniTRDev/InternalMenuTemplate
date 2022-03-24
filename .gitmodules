@@ -17,3 +17,4 @@
 [submodule "vendor/json"]
 	path = vendor/json
 	url = https://github.com/nlohmann/json
+	ignore = dirty
