@@ -6,6 +6,6 @@ namespace change_me
 {
 	void AddHook(std::shared_ptr<Hook> Hk)
 	{
-		g_Hooking->m_Hooks.push_back(Hk);
+		Hooking::Get()->m_Hooks.push_back(Hk);
 	}
 }
