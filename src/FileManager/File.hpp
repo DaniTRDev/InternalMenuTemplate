@@ -11,6 +11,7 @@ namespace change_me
 		File(std::filesystem::path FilePath);
 
 		const std::filesystem::path GetPath() const;
+		std::string GetFileName(bool Extension = false);
 
 		bool DoesFileExist();
 

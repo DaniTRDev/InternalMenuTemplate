@@ -19,6 +19,16 @@ namespace change_me
 		return m_FilePath;
 	}
 
+	std::string File::GetFileName(bool Extension)
+	{
+		auto FileName = m_FilePath.filename().string();
+		
+		if (!Extension)
+			FileName.erase(FileName.begin() + FileName.find_last_of("."), FileName.end());
+
+		return FileName;
+	}
+
 	bool File::DoesFileExist()
 	{
 		struct stat buffer;

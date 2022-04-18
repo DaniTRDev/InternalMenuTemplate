@@ -6,32 +6,22 @@
 namespace change_me
 {
 	class FileManager;
-	inline std::shared_ptr<FileManager> g_FileManager;
 
-	class FileManager
+	class FileManager : public Singleton<FileManager>
 	{
 	public:
 
-		FileManager(std::filesystem::path baseDir)
-			: m_BaseDir(baseDir)
+		FileManager() : m_BaseDir("")
 		{
-			FileManager::EnsureFolderExists(m_BaseDir);
 		}
 		~FileManager()
 		{
 		}
 
-		static std::shared_ptr<FileManager> GetInstance(std::filesystem::path baseDir)
-	    {
-			static std::shared_ptr<FileManager> ptr = std::make_shared<FileManager>(baseDir);
-			return ptr;
-		}
-		static std::shared_ptr<FileManager> GetInstance()
+		void Initialize(std::filesystem::path BaseDir)
 		{
-			if (!g_FileManager)
-				throw std::exception("Error, you must initialize FileManager first!");
-
-			return g_FileManager;
+			m_BaseDir = BaseDir;
+			FileManager::EnsureFolderExists(m_BaseDir);
 		}
 
 		const std::filesystem::path GetBaseDir()
@@ -44,14 +34,14 @@ namespace change_me
 			if (filePath.is_absolute())
 				throw std::exception("Project files are relative to the BaseDir, don't use absolute paths!");
 
-			return File(GetInstance(), filePath);
+			return File(Get(), filePath);
 		}
 		Folder GetProjectFolder(std::filesystem::path folderPath)
 		{
 			if (folderPath.is_absolute())
 				throw std::exception("Project folders are relative to the BaseDir, don't use absolute paths!");
 
-			return Folder(GetInstance(), folderPath);
+			return Folder(Get(), folderPath);
 		}
 
 		static std::filesystem::path EnsureFileCanBeCreated(const std::filesystem::path filePath)
