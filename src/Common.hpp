@@ -11,21 +11,24 @@ using namespace std::chrono_literals;
 #include <thread>
 
 #include <filesystem>
-#include <istream>
+#include <iostream>
 #include <fstream>
 
-#include <format>
 #include <string>
 #include <string_view>
 
 #include <functional>
 #include <mutex>
 
+#include <format>
+
 #pragma comment (lib, "d3d11.lib")
 #include <d3d11.h>
 
 #include <MinHook.h>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui_internal.h"
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <backends/imgui_impl_win32.h>
@@ -34,6 +37,10 @@ using namespace std::chrono_literals;
 #include <g3log/g3log.hpp>
 #include <g3log/loglevels.hpp>
 #include <g3log/logworker.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include "Threads/Singleton.hpp"
 
 #include "Timer.hpp"
 #include "Memory/PointerMath.hpp"
@@ -55,8 +62,8 @@ using namespace std::chrono_literals;
 #include "Threads/Hooking/Hook.hpp" /*this MUST not be modified to avoid conflicts*/
 
 #include "Renderer/AnimationManager/AnimationManager.hpp" /*AnimationManager should not be modified very often*/
-#include "Renderer/AnimationManager/Animations/NotificationManager.hpp"
-
+#include "Renderer/Notifications/NotificationManager.hpp"
+#include "Renderer/UIManager.hpp"
 #include "Renderer/Renderer.hpp" /*renderer should not be modified very often, but Menu should*/
 
 namespace change_me
