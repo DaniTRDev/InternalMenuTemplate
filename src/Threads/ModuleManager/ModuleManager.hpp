@@ -34,7 +34,7 @@ namespace change_me
 		std::uintptr_t m_Size;
 	};
 
-	class ModuleManager : public ThreadPoolBase
+	class ModuleManager : public Singleton<ModuleManager>
 	{
 	public:
 
@@ -43,19 +43,16 @@ namespace change_me
 		void AddModule(std::shared_ptr<Module> Mod);
 
 		bool Initialize();
-		bool Run();
-
-		void UnitializeThread() override;
-
+		void Unitialize();
 		/*full name (+ extension), ex: d3d11.dll*/
 
-		std::shared_ptr<Module> GetModule(std::string_view Name);
+		std::shared_ptr<Module> GetModule(std::uint32_t Id);
 
 	private:
 
-		std::vector<std::shared_ptr<Module>> m_Modules;
+		std::map<std::uint32_t, std::shared_ptr<Module>> m_Modules;
 
-	}; extern std::shared_ptr<ModuleManager> g_ModuleManager;
+	};
 
 }
 

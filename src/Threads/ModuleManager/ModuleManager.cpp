@@ -2,8 +2,6 @@
 
 namespace change_me
 {
-	std::shared_ptr<ModuleManager> g_ModuleManager;
-
 	Module::Module(std::string_view Name) : m_Initialized(false), m_Name(Name), 
 		m_Base(0), m_Size(0)
 	{}
@@ -13,7 +11,8 @@ namespace change_me
 
 	bool Module::TryGetModule()
 	{
-		m_Base = std::uintptr_t(GetModuleHandleA(m_Name.data()));
+		auto ModHandle = GetModuleHandleA(m_Name.length() != 0 ? m_Name.data() : nullptr);
+		m_Base = std::uintptr_t(ModHandle);
 
 		if (m_Base == 0)
 			return false;
@@ -55,70 +54,52 @@ namespace change_me
 		return PointerMath(std::uintptr_t(GetProcAddress(HMODULE(m_Base), Name.data())));
 	}
 
-	ModuleManager::ModuleManager() : 
-		ThreadPoolBase(
-			[](void* Param) 
-				{
-					auto ModuleMgr = reinterpret_cast<ModuleManager*>(Param);
-					ModuleMgr->Initialize();
-
-					g_ThreadPool->OnThreadEvent(ModuleMgr->m_ThreadHandle, ThreadEvent::ThreadEvent_Initialized);
-
-					while (ModuleMgr->m_Initialized)
-					{
-						ModuleMgr->Run();
-						Sleep(1);
-					}
-
-				}, this, "ModuleManager")
+	ModuleManager::ModuleManager()
 	{
 
 	}
 
 	void ModuleManager::AddModule(std::shared_ptr<Module> Mod)
 	{
-		if (GetModule(Mod->GetName()))
+		auto ModId = Joaat(Mod->GetName());
+		if (GetModule(ModId))
 		{
 			LOG(WARNING) << "The module " << Mod->GetName() << " has already been added";
 			return;
 		}
 
-		m_Modules.push_back(Mod);
+		m_Modules.insert({ ModId, Mod }); /*insert the module*/
+
+		ThreadPool::Get()->PushTask([](std::shared_ptr<Module> Mod)
+			{
+				while (!Mod->IsModuleLoaded()) /*add a task to get the module information*/
+				{
+					Mod->TryGetModule();
+					ThreadPool::Get()->Yield();
+				}
+
+				LOG(INFO) << "\n\nCached module:\t{\tName: " << Mod->GetName() << "\tBaseAddress: " << std::hex << Mod->GetBase()
+					<< "\tModuleSize:" << Mod->GetSize() << "\t}\n";
+
+			}, Mod);
 	}
 
 	bool ModuleManager::Initialize()
 	{
-		m_Initialized = true;
 		return true; 
 	}
-	bool ModuleManager::Run()
+	void ModuleManager::Unitialize()
 	{
-		if (m_Initialized)
-		{
-			for (auto& Mod : m_Modules)
-			{
-				if (!Mod->IsModuleLoaded())
-					Mod->TryGetModule();
-			}
-		}
-		return true;
-	}
-	void ModuleManager::UnitializeThread()
-	{
-		if (m_Initialized)
-		{
-			m_Modules.clear();
-			m_Initialized = false;
-		}
+		m_Modules.clear();
 	}
 
-	std::shared_ptr<Module> ModuleManager::GetModule(std::string_view Name)
+	std::shared_ptr<Module> ModuleManager::GetModule(std::uint32_t Id)
 	{
-		for (auto& Mod : m_Modules)
-		{
-			if (Mod->GetName() == Name)
-				return Mod;
-		}
+		auto It = m_Modules.find(Id);
+
+		if (It != m_Modules.end())
+			return m_Modules[Id];
+
 		return nullptr;
 	}
 }
