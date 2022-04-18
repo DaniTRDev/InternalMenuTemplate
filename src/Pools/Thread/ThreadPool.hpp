@@ -1,70 +1,73 @@
 #pragma once
 
+#undef Yield
+
 namespace change_me
 {
-	class ThreadPoolBase
+	class ThreadPool : public Singleton<ThreadPool>
 	{
 	public:
-		friend class ThreadPool;
-		using ThreadFunc_t = void(void*);
 
-		ThreadPoolBase(ThreadFunc_t* ThreadFunc, void * Param, std::string_view Name);
+		void Initialize(std::uint32_t NumThreads = std::thread::hardware_concurrency());
+		void Uninitialize();
 
-		ThreadPoolBase();
+		static void ThreadWorker(ThreadPool * Pool);
 
-		void Run();
-		virtual void UnitializeThread() = 0;
+		void SetState(bool State);
+		bool GetState();
 
-		bool IsInitialized();
+		template<typename T>
+		inline void PushTask(T Func)
+		{
+			std::scoped_lock Lock(m_Mutex);
 
-		HANDLE m_ThreadHandle;
-		std::string_view m_Name;
+			m_TotalTasks++;
+			m_Tasks.push(std::function<void()>(Func));
+		}
+
+		template<typename T, typename ...Args>
+		inline void PushTask(T Func, Args&&... args)
+		{
+			PushTask([Func, args...] { Func(args...);  });
+		}
+
+		std::size_t GetNumThreads();
+		std::size_t GetNumTasks();
+
+		void Yield(std::chrono::high_resolution_clock::duration Time = 0ms);
 
 	private:
 
-		ThreadFunc_t* m_ThreadFunc;
-		void* m_Param;
+		inline bool PopTask(std::function<void()>& Task)
+		{
+			std::scoped_lock Lock(m_Mutex);
 
-	protected:
+			if (m_Tasks.size())
+			{
+				Task = std::move(m_Tasks.front());
+				m_Tasks.pop();
 
+				return true;
+			}
+
+			return false;
+		}
+
+	private:
+
+		std::map<std::uint32_t, std::thread> m_Threads;
+
+		std::queue<std::function<void()>> m_Tasks;
+
+		std::recursive_mutex m_Mutex;
+
+		bool m_State{ false }; /*used to tell our thread pool to stop executing tasks, usefull when we inject the mod
+					     in the game and we want to wait until a certain game state is reached*/
 		bool m_Initialized;
 
+		std::size_t m_TotalTasks;
+
 	};
 
-	enum class ThreadEvent
-	{
-		ThreadEvent_Initialized,
-		ThreadEvent_CouldntInitialize,
-
-		ThreadEvent_Uninitialized,
-	};
-
-	class ThreadPool
-	{
-	public:
-
-		static std::shared_ptr<ThreadPool> GetInstance();
-
-		void CreateThread(std::shared_ptr<ThreadPoolBase> Thread);
-		void DestroyThread(std::string_view ThreadName);
-
-		void Uninitialize();
-
-		std::shared_ptr<ThreadPoolBase> GetThread(std::string_view ThreadName);
-		std::shared_ptr<ThreadPoolBase> GetThread(HANDLE ThreadHandle);
-
-		using ThreadListener_t = std::function<void(ThreadEvent Event)>;
-		void AddThreadListener(std::shared_ptr<ThreadPoolBase> Thread, ThreadListener_t Listener);
-
-		void OnThreadEvent(HANDLE ThreadHndl, ThreadEvent Event);
-
-	public:
-
-		HANDLE m_CurrentThread;
-
-		std::vector<std::shared_ptr<ThreadPoolBase>> m_Threads;
-		std::vector<std::pair<std::shared_ptr<ThreadPoolBase>, ThreadListener_t>> m_ThreadsListener;
-
-	};  extern std::shared_ptr<ThreadPool> g_ThreadPool;
 }
 
