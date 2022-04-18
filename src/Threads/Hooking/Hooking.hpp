@@ -10,20 +10,16 @@ namespace change_me
 	constexpr std::size_t g_SwapChainPresentId = 8;
 	extern HRESULT PresentHK(IDXGISwapChain * ThisPtr, UINT Flags, UINT VSync);
 
-	class Hooking : public ThreadPoolBase
+	class Hooking : public Singleton<Hooking>
 	{
 	public:
 
-		Hooking();
-
-		bool Initialize();
-		bool Run();
-
-		void UnitializeThread() override;
+		void DoHooks();
+		void Unitialize();
 
 	public:
 
 		std::vector<std::shared_ptr<Hook>> m_Hooks;
 
-	}; extern std::shared_ptr<Hooking> g_Hooking;
+	};
 }
