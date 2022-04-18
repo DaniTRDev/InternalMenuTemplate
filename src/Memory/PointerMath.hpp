@@ -47,6 +47,11 @@ namespace change_me
 			return reinterpret_cast<T>(m_Ptr);
 		}
 
+		inline PointerMath DerreferenceAsAddr()
+		{
+			return PointerMath(*As<std::uintptr_t*>());
+		}
+
 		inline PointerMath ReadRel(std::size_t Offset) 
 		{
 			auto CurAddr = Add(Offset); /*skip the bytes that are jut to identify the instruction*/
