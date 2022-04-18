@@ -2,63 +2,42 @@
 
 namespace change_me
 {
-	std::shared_ptr<PatternScanner> g_PatternScanner;
-
-	PatternScanner::PatternScanner() :
-		ThreadPoolBase(
-			[](void* Param)
-			{
-				auto PatScanner = reinterpret_cast<PatternScanner*>(Param);
-				PatScanner->Initialize();
-
-				g_ThreadPool->OnThreadEvent(PatScanner->m_ThreadHandle, ThreadEvent::ThreadEvent_Initialized);
-
-				while (PatScanner->m_Initialized)
-				{
-					PatScanner->Run();
-					Sleep(1);
-				}
-
-			}, this, "PatternScanner"), m_AreCriticalPatternsScanned(false), m_DoScan(false)
-	{
-
-	}
+	PatternScanner::PatternScanner()
+	{}
 
 	bool PatternScanner::Initialize()
 	{
-		while (!g_ModuleManager->IsInitialized())
-			Sleep(1);
-
-		g_ModuleManager->AddModule(std::make_shared<Module>(g_GameModuleName)); /*add the game module itself*/
-
-		m_Initialized = true;
+		ModuleManager::Get()->AddModule(std::make_shared<Module>(g_GameModuleName)); /*add the game module itself*/
 		return true;
 	}
-	bool PatternScanner::Run()
-	{
-		if (m_Initialized)
-			Scan();
 
-		return true;
-	}
-	void PatternScanner::UnitializeThread()
+	void PatternScanner::OnModule(std::shared_ptr<Module> Mod, OnModuleCB_t* ModCallback, OnFinishedScanCB_t* OnFinishedScanCB)
 	{
-	}
-
-	void PatternScanner::OnModule(std::shared_ptr<Module> Module, std::function<void()> Callback)
-	{
-		if (!Module || (Module->GetName().length() == 0))
+		if (!Mod || (Mod->GetName().length() == 0))
 		{
 			LOG(WARNING) << "The module is not valid!";
 			return;
 		}
 
-		m_CurrentModule = Module;
-		Callback();
+		ThreadPool::Get()->PushTask([](PatternScanner* Scanner, std::shared_ptr<Module> Mod,
+			OnModuleCB_t* Callback, OnFinishedScanCB_t OnFinishedScanCB)
+			{
+				while (!Mod->IsModuleLoaded())
+					ThreadPool::Get()->Yield();
 
-		m_CurrentModule = nullptr; /*reset the module*/
+				Scanner->m_CurrentModule = Mod;
+				Callback();
+
+				Scanner->Scan();
+				
+				ThreadPool::Get()->PushTask(OnFinishedScanCB);/*push another task to not make this one a big charge for
+														 the thread*/
+
+				Scanner->m_CurrentModule = nullptr; /*reset the module*/
+
+			}, this, Mod, ModCallback, OnFinishedScanCB);
 	}
-	void PatternScanner::Add(Pattern Patt, OnScannedPatternCB_t CB)
+	void PatternScanner::Add(Pattern Patt, OnScannedPatternCB_t* CB)
 	{
 		if (!m_CurrentModule)
 		{
@@ -66,7 +45,7 @@ namespace change_me
 			return;
 		}
 
-		for (auto& PattInfo : m_Patterns[m_CurrentModule])
+		for (auto& PattInfo : m_Patterns)
 		{
 			if (PattInfo.second.GetName() == Patt.GetName())
 			{
@@ -75,84 +54,66 @@ namespace change_me
 			}
 		}
 
-		m_Patterns[m_CurrentModule].push_back(std::make_pair(CB, Patt));
+		m_Patterns.push_back(std::make_pair(CB, Patt));
 	}
 	
 	void PatternScanner::Scan()
 	{
-		if (m_DoScan)
-		{
-			bool PatternScanned = false; /*this will be like a chain, when a pattern couldn't be found it will set
-										  m_AreCriticalPatternsScanned to false*/
-			for (auto& Pat : m_Patterns)
-			{
-				if (!Pat.first->IsModuleLoaded())
-					Sleep(1); /*wait until the next tick*/
-
-				for (auto& PatInfo : Pat.second)
-				{
-					if (!PatInfo.second.m_Scanned)
-						PatternScanned = ScanPattern(PatInfo, Pat.first);
-				}
-			}
-
-			if (PatternScanned)
-				m_AreCriticalPatternsScanned = true;
-
-			m_DoScan = false;
-		}
+		ScanPatternsForModule(m_Patterns);
 	}
-	bool PatternScanner::ScanPattern(std::pair<OnScannedPatternCB_t,Pattern> PattInfo, std::shared_ptr<Module> Mod)
+	void PatternScanner::ScanPatternsForModule(PatternVec_t& Patterns)
 	{
-		for (std::uintptr_t i = Mod->GetBase(); i < Mod->GetEnd(); i++) /*walk throught each game addr*/
+		nlohmann::json ScanResult;
+
+		for (auto i = m_CurrentModule->GetBase(); i < m_CurrentModule->GetEnd(); i++)
 		{
-			auto OpCodes = reinterpret_cast<std::uint8_t*>(i);
-			auto PatternBytes = PattInfo.second.GetPatternBytes();
+			auto OpCodes = (std::uint8_t*)i;
 
-			for (auto CurOpId = 0; CurOpId < PatternBytes.size(); CurOpId++)
+			for (auto& Pat : Patterns)
 			{
-				auto CurOpCode = OpCodes[CurOpId];
+				if (Pat.second.m_Scanned)
+					continue;
 
-				if (PatternBytes[CurOpId] == 0)
-					continue; /*the current op code is a wildcard in our signature, so we don't care about it*/
-
-				else if (PatternBytes[CurOpId] != OpCodes[CurOpId])
-					break;
-
-				if (CurOpId == PatternBytes.size() - 1) /*if the loop reached this place, we found out the pattern*/
+				auto& PatternBytes = Pat.second.m_PatternBytes;
+				for (auto OpCodeId = 0; OpCodeId < PatternBytes.size(); OpCodeId++)
 				{
+					if (PatternBytes[OpCodeId] == 0) /*wildcard*/
+						continue;
 
-					auto Ptr = PointerMath(i);
+					else if (PatternBytes[OpCodeId] != OpCodes[OpCodeId])
+						break;
 
-					LOG(INFO) << "{ "
-						<< AddColorToStream(LogColor::CYAN) << "PatternName: " << PattInfo.second.GetName() << ","
-						<< "\t" << AddColorToStream(LogColor::MAGENTA) << "FoundAddress: " << std::hex << i
-						<< ResetStreamColor << " }";
+					if (OpCodeId == PatternBytes.size() - 1)
+					{
+						auto Address = PointerMath(i); /*if we reached this place it means we found the pattern*/
 
-					PattInfo.second.m_Scanned = true;
+						if (Pat.first)
+							Pat.first(Address); /*adjust the address, rip, sub, add, ...*/
 
-					if (PattInfo.first)
-						PattInfo.first(Ptr);
+						Pat.second.m_Scanned = true;
 
-					return true;
+					}
 				}
 			}
 		}
 
-		LOG(WARNING) << "Could not retrieve the pattern " << AddColorToStream(LogColor::CYAN)
-			<< PattInfo.second.GetName() << ResetStreamColor;
-		
-		PattInfo.second.m_Scanned = true;
+		for (auto i = 0; i < Patterns.size(); i++) /*do a second iteration to create the json obj*/
+		{
+			auto& Pat = Patterns[i];
 
-		return false;
+			ScanResult.push_back(
+				{
+				{ "Correct", Pat.second.m_Scanned ? "true" : "false" },
+				{ "PatternName", Pat.second.m_Name }
+				});
+		}
+
+		LOG(INFO) << "Scanned patterns in module: " << m_CurrentModule->GetName()  << "\n" << ScanResult.dump(6);
+		ScanResult.clear();
 	}
 
-	bool PatternScanner::AreCriticalPatternsScanned()
+	bool PatternScanner::ArePatternsScanned()
 	{
-		return m_AreCriticalPatternsScanned;
-	}
-	void PatternScanner::DoScan()
-	{
-		m_DoScan = true;
+		return (m_TotalPatterns != 0 && m_Patterns.size() == 0);
 	}
 }
