@@ -45,6 +45,8 @@ git push origin branch_name
 
 ## Coding Style
 
+Naming convention = PascalCase
+
 ```cpp
 class ClassName;
 inline ClassName* g_ClassName = nullptr;
@@ -52,8 +54,8 @@ inline ClassName* g_ClassName = nullptr;
 class ClassName
 {
 public:
-    ClassName(std::string someParameter = "Instantiation")
-        : m_MemberVariable(someParameter)
+    ClassName(std::string SomeParameter = "Instantiation")
+        : m_MemberVariable(SomeParameter)
     {
 
     }
