@@ -3,8 +3,6 @@
 namespace change_me
 {
 	class Logger;
-	inline std::shared_ptr<Logger> g_Log;
-
 	enum class LogColor
 	{
 		RESET,
@@ -18,34 +16,24 @@ namespace change_me
 		BLACK = 30
 	};
 
-#define AddColorToStream(color) "\x1b[" << int(color) << "m"
-#define ResetStreamColor "\x1b[" << int(LogColor::RESET) << "m"
+#define ADD_COLOR_TO_TEXT(color, Text) "\x1b[" << int(color) << "m" << Text << "\x1b[" << int(LogColor::RESET) << "m"
 
-	class Logger final
+	class Logger : public Singleton<Logger>
 	{
 
 	public:
-		Logger(std::string_view consoleTitle, File file, bool attachConsole = true)
-			: m_ConsoleTitle(consoleTitle), m_File(file), m_AttachConsole(attachConsole),
+		Logger()
+			: m_ConsoleTitle("NON-SET"), m_File(nullptr), m_AttachConsole(false),
 			  m_DidConsoleExist(false), m_Worker(g3::LogWorker::createLogWorker()), m_ConsoleHandle(NULL),
 			  m_OriginalConsoleMode(0)
 		{}
 
-		static std::shared_ptr<Logger> GetInstance(std::string_view consoleTitle, File file, bool attachConsole = true)
+		void Initialize(std::string_view ConsoleTitle, File file, bool AttachConsole = true)
 		{
-			static auto ptr = std::make_shared<Logger>(consoleTitle, file, attachConsole);
-			return ptr;
-		}
-		static std::shared_ptr<Logger> GetInstance()
-		{
-			if (!g_Log)
-				throw std::runtime_error("Error, before you must initialize Logger first!");
+			m_ConsoleTitle = ConsoleTitle;
+			m_File = new File(file.GetPath());
+			m_AttachConsole = AttachConsole;
 
-			return g_Log;
-		}
-
-		void Initialize()
-		{
 			if (m_AttachConsole)
 			{
 				if (m_DidConsoleExist = ::AttachConsole(GetCurrentProcessId()), !m_DidConsoleExist)
@@ -99,9 +87,9 @@ namespace change_me
 		void OpenOutStreams()
 		{
 			if (m_AttachConsole)
-				m_ConsoleOut.open("CONOUT$", std::ios_base::out | std::ios_base::app);
+				m_ConsoleOut.open("CONOUT$", std::ios_base::out |std::ios_base::app);
 
-			m_FileOut.open(m_File.GetPath(), std::ios_base::out | std::ios_base::trunc);
+			m_FileOut.open(m_File->GetPath(), std::ios_base::out | std::ios_base::trunc);
 		}
 		void CloseOutStreams()
 		{
@@ -116,10 +104,11 @@ namespace change_me
 		{
 			void Callback(g3::LogMessageMover log)
 			{
-				if (Logger::GetInstance()->m_ConsoleOut.is_open())
-					Logger::GetInstance()->m_ConsoleOut << log.get().toString(LogSink::FormatConsole) << std::flush;
+				if (Logger::Get()->m_ConsoleOut.is_open())
+					Logger::Get()->m_ConsoleOut << log.get().toString(LogSink::FormatConsole) << std::flush;
 
-				Logger::GetInstance()->m_FileOut << log.get().toString(LogSink::FormatFile) << std::flush;
+				Logger::Get()->m_FileOut << log.get().toString(LogSink::FormatFile) << std::flush;
+
 			}
 
 			static LogColor GetColor(const LEVELS level)
@@ -138,15 +127,14 @@ namespace change_me
 
 			static std::string FormatConsole(const g3::LogMessage& msg)
 			{
+
 				LogColor color = LogSink::GetColor(msg._level);
 				std::stringstream out;
 
 				out
 					<< "[" << msg.timestamp("%H:%M:%S") << "]"
-					<< AddColorToStream(color)
-					<< "[" << std::setw(7) << msg.level() << "/"
-					<< msg.file() << ":" << msg.line() << "]"
-					<< ResetStreamColor 
+					<< ADD_COLOR_TO_TEXT(color, "[" << std::setw(7) << msg.level() << "/"
+					<< msg.file() << ":" << msg.line() << "]") 
 					<< ":";
 
 
@@ -165,7 +153,9 @@ namespace change_me
 
 				return out.str();
 			}
+
 		};
+
 
 	private:
 		friend struct LogSink;
@@ -180,9 +170,8 @@ namespace change_me
 		std::ofstream m_ConsoleOut;
 		std::ofstream m_FileOut;
 
-		File m_File;
+		File * m_File;
 
 		std::unique_ptr<g3::LogWorker> m_Worker;
-
 	};
 }

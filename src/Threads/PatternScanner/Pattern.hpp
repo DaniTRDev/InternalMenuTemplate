@@ -58,7 +58,6 @@ namespace change_me
 			if (PtrAddr != 0)
 				return reinterpret_cast<T>(PtrAddr);
 
-			LOG(WARNING) << "The pointer " << m_Name << " isn't initialised!";
 			return nullptr;
 		}
 

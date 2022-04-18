@@ -1,52 +1,52 @@
 #include "Common.hpp"
 #include "Threads/Pointers/Pointers.hpp"
 #include "Threads/Hooking/Hooking.hpp"
+#include "Renderer/UIManager.hpp"
 #include "Renderer.hpp"
 #include "Menu/Main.hpp" /*this one will also include other menuses*/
 
 namespace change_me
 {
-	std::shared_ptr<Renderer> g_Renderer;
-
 	Renderer::Renderer() : m_Open(false), m_Device(nullptr),
 		m_DeviceContext(nullptr), m_SwapChain(nullptr), m_RenderTarget(nullptr),
-		m_BlendState(nullptr), m_BlendColor(), m_OpenTimer(200ms)
+		m_BlendState(nullptr), m_BlendColor()
 	{}
 
-	void Renderer::Initialize()
+	void Renderer::Initialize(ID3D11Device* Device, ID3D11DeviceContext* DeviceContext, IDXGISwapChain* SwapChain)
 	{
+		if (!Device)
+		{
+			LOG(WARNING) << "The Device pointer is not valid!";
+			return;
+		}
+		else if (!DeviceContext)
+		{
+			LOG(WARNING) << "The DeviceContext pointer is not valid!";
+			return;
+		}
+		else if (!SwapChain)
+		{
+			LOG(WARNING) << "The SwapChain pointer is not valid!";
+			return;
+		}
 
-		while ((!m_Device) || (!m_DeviceContext)) 
-			Sleep(1); /*this is a check to ensure we passed the pointers throught SetD3DPtrs*/
+		m_Device = Device;
+		m_DeviceContext = DeviceContext;
+
+		m_SwapChain = SwapChain;
 
 		if ((!CreateRenderTarget()) || (!CreateBlendState()))
 			return;
 
-		ImGui::CreateContext();
-		ImGui::StyleColorsDark();
-
-		if (!ImGui_ImplWin32_Init(g_Pointers->m_Hwnd))
-		{
-			LOG(WARNING) << "Couldn't initialize ImGui::Win32!";
-			return;
-		}
-		LOG(INFO) << "Initialized ImGui::Win32";
-
-		if (!ImGui_ImplDX11_Init(m_Device, m_DeviceContext))
-		{
-			LOG(WARNING) << "Couldn't initialize ImGui::Dx11!";
-			return;
-		}
-		LOG(INFO) << "Initialized ImGui::DX11";
-
-		auto FontFile = g_FileManager->GetProjectFolder("GUI").GetFile("Fredoka.ttf");
-
-		if (FontFile.DoesFileExist())
-			ImGui::GetIO().Fonts->AddFontFromFileTTF(FontFile.GetPath().string().c_str(), 20.f);
-
+		InitializeImGui();
 
 		g_AnimationManager = std::make_shared<AnimationManager>();
 		m_Notifications = std::make_unique<NotificationManager>();
+
+		m_UIManager = std::make_unique<UIManager>();
+		m_UIManager->Initialize();
+
+		m_Notifications->PushNotification(g_CheatName.data(), "Menu correctly initialized!");
 
 		m_Initialized = true;
 
@@ -57,6 +57,10 @@ namespace change_me
 		if (m_RenderTarget && m_BlendState)
 		{
 			m_Notifications->ClearNotifications();
+			m_Notifications.reset();
+
+			m_UIManager->Uninitialize();
+			m_UIManager.reset();
 
 			g_AnimationManager->ClearAnimationQueue();
 			g_AnimationManager.reset();
@@ -72,6 +76,26 @@ namespace change_me
 		}
 	}
 
+	void Renderer::InitializeImGui()
+	{
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+
+		if (!ImGui_ImplWin32_Init(Pointers::Get()->m_Hwnd))
+		{
+			LOG(WARNING) << "Couldn't initialize ImGui::Win32!";
+			return;
+		}
+		LOG(INFO) << "Initialized ImGui::Win32";
+
+		if (!ImGui_ImplDX11_Init(m_Device, m_DeviceContext))
+		{
+			LOG(WARNING) << "Couldn't initialize ImGui::Dx11!";
+			return;
+		}
+		LOG(INFO) << "Initialized ImGui::DX11";
+	}
+
 	void Renderer::NewFrame()
 	{
 		if (m_Initialized)
@@ -83,39 +107,26 @@ namespace change_me
 			ImGui::NewFrame();
 		}
 	}
-
 	void Renderer::Render()
 	{
-		if (m_Initialized)
+		if (m_Initialized && m_Open)
 		{
-			static std::once_flag Flag;
-			std::call_once(Flag, [&] 
-				{
-					m_Notifications->PushNotification(g_CheatName.data(), "Menu correctly initialized!");
-				});
-
-			if (ImGui::IsKeyDown(ImGuiKey_KeypadMultiply) && m_OpenTimer.OnUpdate())
-				m_Open ^= true;
-
-			if (m_Open)
+			if (ImGui::Begin("##MainMenuWindow", nullptr, 
+				ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
+				| ImGuiWindowFlags_NoMove))
 			{
-				if (ImGui::Begin("##MainWindow", nullptr, ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground
-					| ImGuiWindowFlags_NoMove))
-				{
-					ImGui::SetWindowPos(ImVec2(0, 0));
-					ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
+				ImGui::SetWindowPos(ImVec2(0, 0));
+				ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
-				} ImGui::End();
-			}
+				MainMenu(m_UIManager.get());
+				m_UIManager->Render();
 
-			if (ImGui::Begin("##NotificationWindow", nullptr,
-				ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground
-				| ImGuiWindowFlags_NoMove)) /*create an invisible window for the animations*/
-			{
 				m_Notifications->Run();
 				g_AnimationManager->Run();
-			
+
 			} ImGui::End();
+
+
 		}
 	}
 	void Renderer::EndFrame()
@@ -135,33 +146,27 @@ namespace change_me
 		if (!m_Initialized)
 			return false;
 
-		return ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);;
-	}
+		auto Res = ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
 
-	bool Renderer::SetD3DPointers(ID3D11Device* Device, ID3D11DeviceContext* DeviceContext, IDXGISwapChain* SwapChain)
-	{
-		if (!Device)
+		if (ImGui::IsKeyDown(ImGuiKey_KeypadMultiply))
+			m_Open ^= true;
+
+		if (m_Open)
 		{
-			LOG(WARNING) << "The Device pointer is not valid!";
-			return false;
+			ImGui::GetIO().MouseDrawCursor = true;
+			ImGui::GetIO().WantCaptureKeyboard = true;
+
+			ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 		}
-		else if (!DeviceContext)
+		else
 		{
-			LOG(WARNING) << "The DeviceContext pointer is not valid!";
-			return false;
-		}
-		else if (!SwapChain)
-		{
-			LOG(WARNING) << "The SwapChain pointer is not valid!";
-			return false;
+			ImGui::GetIO().MouseDrawCursor = false;
+			ImGui::GetIO().WantCaptureKeyboard = false;
+
+			ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
 		}
 
-		m_Device = Device;
-		m_DeviceContext = DeviceContext;
-
-		m_SwapChain = SwapChain;
-
-		return true;
+		return Res;
 	}
 
 	bool Renderer::CreateRenderTarget()
@@ -206,6 +211,67 @@ namespace change_me
 		return true;
 	}
 
+	ID3D11Texture2D* Renderer::Create2DTexture(D3D11_TEXTURE2D_DESC* Desc, D3D11_SUBRESOURCE_DATA* ResourceData)
+	{
+		ID3D11Texture2D* Texture = nullptr;
+		m_Device->CreateTexture2D(Desc, ResourceData, &Texture);
+
+		return Texture;
+	}
+	ID3D11ShaderResourceView* Renderer::CreateShaderResourceView(ID3D11Texture2D* Texture, D3D11_SHADER_RESOURCE_VIEW_DESC* Desc)
+	{
+		ID3D11ShaderResourceView* ShaderResourceView = nullptr;
+		m_Device->CreateShaderResourceView(Texture, Desc, &ShaderResourceView);
+
+		return ShaderResourceView;
+	}
+
+	ID3D11ShaderResourceView* Renderer::CreateShaderResourceViewForImg(void* Pixels, std::uint32_t Width,
+		std::uint32_t Height, std::string ImgName)
+	{
+		D3D11_TEXTURE2D_DESC TexDesc;
+		ZeroMemory(&TexDesc, sizeof(TexDesc));
+		TexDesc.Width = Width;
+		TexDesc.Height = Height;
+		TexDesc.MipLevels = 1;
+		TexDesc.ArraySize = 1;
+		TexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		TexDesc.SampleDesc.Count = 1;
+		TexDesc.Usage = D3D11_USAGE_DEFAULT;
+		TexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		TexDesc.CPUAccessFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA ResourceData;
+		ResourceData.pSysMem = Pixels;
+		ResourceData.SysMemPitch = TexDesc.Width * 4;
+		ResourceData.SysMemSlicePitch = 0;
+
+		auto Texture = Create2DTexture(&TexDesc, &ResourceData);
+		if (!Texture)
+		{
+			LOG(WARNING) << "Could not create image texture: [" << ADD_COLOR_TO_TEXT(LogColor::BLUE, ImgName) << "]";
+			return nullptr;
+		}
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC ShaderResourceDesc;
+		ZeroMemory(&ShaderResourceDesc, sizeof(ShaderResourceDesc));
+		ShaderResourceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		ShaderResourceDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		ShaderResourceDesc.Texture2D.MipLevels = TexDesc.MipLevels;
+		ShaderResourceDesc.Texture2D.MostDetailedMip = 0;
+
+		auto View = CreateShaderResourceView(Texture, &ShaderResourceDesc);
+
+		if (!View)
+		{
+			LOG(WARNING) << "Could not create image resource view: [" << ADD_COLOR_TO_TEXT(LogColor::BLUE, ImgName) << "]";
+			return nullptr;
+		}
+
+		Texture->Release();
+		return View;
+	}
+
 	void Renderer::PreResize()
 	{
 		if (m_Initialized)
@@ -223,5 +289,19 @@ namespace change_me
 			CreateRenderTarget();
 			ImGui_ImplDX11_CreateDeviceObjects();
 		}
+	}
+
+	ID3D11Device* Renderer::GetDevice()
+	{
+		return m_Device;
+	}
+	ID3D11DeviceContext* Renderer::GetContext()
+	{
+		return m_DeviceContext;
+	}
+
+	IDXGISwapChain* Renderer::GetSwapChain()
+	{
+		return m_SwapChain;
 	}
 }

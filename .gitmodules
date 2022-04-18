@@ -10,3 +10,11 @@
 	path = vendor/g3log
 	url = https://github.com/KjellKod/g3log.git
 	ignore = dirty
+[submodule "vendor/stb"]
+	path = vendor/stb
+	url = https://github.com/nothings/stb
+	ignore = dirty
+[submodule "vendor/json"]
+	path = vendor/json
+	url = https://github.com/nlohmann/json
+	ignore = dirty

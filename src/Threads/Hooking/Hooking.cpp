@@ -5,14 +5,12 @@
 
 namespace change_me
 {
-	std::shared_ptr<Hooking> g_Hooking;
-
 	HRESULT WndProcHK(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (g_Renderer->WndProc(hWnd, Msg, wParam, lParam))
+		if (Renderer::Get()->WndProc(hWnd, Msg, wParam, lParam))
 			return S_OK;
 
-		return g_Pointers->m_Test1.Get()(hWnd, Msg, wParam, lParam);
+		return  Pointers::Get()->m_Test1.Get()(hWnd, Msg, wParam, lParam);
 	}
 
 	HRESULT PresentHK(IDXGISwapChain* ThisPtr, UINT Flags, UINT VSync)
@@ -21,67 +19,36 @@ namespace change_me
 
 		std::call_once(Flag, [&]
 			{
-				g_Renderer->SetD3DPointers(g_Pointers->m_Device.GetPtr(), g_Pointers->m_Context.GetPtr(), ThisPtr);
-				g_Renderer->Initialize();
+				Renderer::Get()->Initialize(Pointers::Get()->m_Device.GetPtr(), Pointers::Get()->m_Context.GetPtr(), ThisPtr);
 			});
 
-		g_Renderer->NewFrame();
-		g_Renderer->Render();
-		g_Renderer->EndFrame();
-		return g_Pointers->m_SwapChain.Get()(ThisPtr, Flags, VSync);
+		Renderer::Get()->NewFrame();
+		Renderer::Get()->Render();
+		Renderer::Get()->EndFrame();
+		return Pointers::Get()->m_SwapChain.Get()(ThisPtr, Flags, VSync);
 	}
 
-	Hooking::Hooking() :
-		ThreadPoolBase([](void* Param)
+	void Hooking::DoHooks()
+	{
+		ThreadPool::Get()->PushTask([](Hooking* Hooking)
 			{
-				auto Hooks = reinterpret_cast<Hooking*>(Param);
-
-				Hooks->Initialize();
-				g_ThreadPool->OnThreadEvent(Hooks->m_ThreadHandle, ThreadEvent::ThreadEvent_Initialized);
-
-				while (Hooks->IsInitialized())
+				for (auto& Hook : Hooking->m_Hooks)
 				{
-					Hooks->Run();
-					Sleep(1);
+					if (!Hook->m_Created)
+						Hook->CreateHook(Hook->m_Target);
+
+					if (!Hook->m_Enabled) /*this will help to dynamically add hooks after the start up*/
+						Hook->EnableHook();
 				}
-			
-			}, this, "Hooking")
-		{}
+			}, this);
 
-	bool Hooking::Initialize()
-	{	
-		MH_Initialize();
-		m_Initialized = true;
-
-		return true;
 	}
-	bool Hooking::Run()
+	void Hooking::Unitialize()
 	{
-		if (g_PatternScanner->AreCriticalPatternsScanned())
+		for (auto& Hook : m_Hooks)
 		{
-			for (auto& Hook : m_Hooks)
-			{
-				if (!Hook->m_Created)
-					Hook->CreateHook(Hook->m_Target);
-
-				if (!Hook->m_Enabled) /*this will help to dinamicly add hooks after the start up*/
-					Hook->EnableHook();
-			}
-		}
-
-		return true;
-	}
-	void Hooking::UnitializeThread()
-	{
-		if (m_Initialized)
-		{
-			for (auto& Hook : m_Hooks)
-			{
-				Hook->DisableHook();
-				Hook->DestroyHook();
-			}
-
-			MH_Uninitialize();
+			Hook->DisableHook();
+			Hook->DestroyHook();
 		}
 	}
 

@@ -33,8 +33,8 @@ namespace change_me
 			refreshRate.Denominator = 1;
 
 			DXGI_MODE_DESC bufferDesc;
-			bufferDesc.Width = *g_Pointers->m_Width.GetPtr();
-			bufferDesc.Height = *g_Pointers->m_Height.GetPtr();
+			bufferDesc.Width = *Pointers::Get()->m_Width.GetPtr();
+			bufferDesc.Height = *Pointers::Get()->m_Height.GetPtr();
 			bufferDesc.RefreshRate = refreshRate;
 			bufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			bufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -49,7 +49,7 @@ namespace change_me
 			swapChainDesc.SampleDesc = sampleDesc;
 			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 			swapChainDesc.BufferCount = 1;
-			swapChainDesc.OutputWindow = g_Pointers->m_Hwnd;
+			swapChainDesc.OutputWindow = Pointers::Get()->m_Hwnd;
 			swapChainDesc.Windowed = 1;
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 			swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -63,7 +63,7 @@ namespace change_me
 				return false;
 			}
 
-			LOG(INFO) << "Created a dummy swapchain at addr: GameModBase+0x" << std::uintptr_t(swapChain);
+			LOG(INFO) << "Created a dummy swapchain at addr: " << std::hex << std::uintptr_t(swapChain);
 
 			SwapTable = *(std::uintptr_t***)swapChain;
 

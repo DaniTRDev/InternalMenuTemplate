@@ -23,8 +23,7 @@ namespace change_me
 		{
 			[this]()
 			{
-				LOG(WARNING) << "Error at fiber " << AddColorToStream(LogColor::YELLOW) 
-					<< m_Index << " " << m_Name << ResetStreamColor;
+				LOG(WARNING) << "Error at fiber " << ADD_COLOR_TO_TEXT(LogColor::YELLOW, m_Index << " " << m_Name);
 				
 				while (true)
 				{
@@ -59,12 +58,11 @@ namespace change_me
 	{
 		if (GetFiber(Fiber->m_Index))
 		{
-			LOG(INFO) << "Fiber " << AddColorToStream(LogColor::YELLOW)
-				<< Fiber->m_Index << " " << Fiber->m_Name << ResetStreamColor << "already added!";
+			LOG(INFO) << "Fiber " << ADD_COLOR_TO_TEXT(LogColor::YELLOW, Fiber->m_Index << "\t" << Fiber->m_Name)
+				<< "already added!";
 		}
 
-		LOG(INFO) << "Creating new fiber " << AddColorToStream(LogColor::YELLOW)
-			<< Fiber->m_Index << " " << Fiber->m_Name << ResetStreamColor;
+		LOG(INFO) << "Creating new fiber " << ADD_COLOR_TO_TEXT(LogColor::YELLOW, Fiber->m_Index << "\t" << Fiber->m_Name);
 
 		auto Handle = ::CreateFiber(0, [](void* LpParam) -> void
 			{

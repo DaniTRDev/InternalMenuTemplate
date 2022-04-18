@@ -3,16 +3,25 @@
 /*don't add this one to Common.hpp because it will be constantly modified*/
 namespace change_me
 {
-	class Pointers : public ThreadPoolBase
+
+#define POINTER_DECL(Ptr, Name, PointerAddr, Adjust) PointerAddr = PointerAddr.Adjust; \
+	Ptr = decltype(Ptr)(Name, PointerAddr);
+
+#define POINTER_DECL_RAW(Ptr, Name, Addr) Ptr = decltype(Ptr)(Name, std::uintptr_t(Addr));
+
+#define DHOOK_DECL(Ptr, Name, Detour, PointerAddr, Adjust) PointerAddr = PointerAddr.Adjust; \
+	 Ptr = decltype(Ptr)(Name, PointerAddr.As<std::uintptr_t>(), (void*)Detour);
+
+#define DHOOK_DECL_RAW(Ptr, Name, Detour, Addr) Ptr = decltype(Ptr)(Name, std::uintptr_t(Addr), (void*)Detour);
+
+
+	class Pointers : public Singleton<Pointers>
 	{
 	public:
 
 		Pointers();
 
 		bool Initialize();
-		bool Run();
-
-		void UnitializeThread() override;
 
 		using WndProc_t = HRESULT(HWND, UINT, WPARAM, LPARAM);
 		HookWrapper<DHookWrapper, WndProc_t*> m_Test1;
@@ -30,5 +39,5 @@ namespace change_me
 
 	private:
 
-	}; extern std::shared_ptr<Pointers> g_Pointers;
+	};
 }

@@ -103,6 +103,27 @@ workspace "InternalModMenu"
 
         DeclareCommon()
 
+    project "stb"
+        location "vendor/%{prj.name}"
+        kind "None"
+
+        files {
+            "vendor/%{prj.name}/**.h",
+        }
+
+        DeclareCommon()
+
+    project "json"
+        location "vendor/%{prj.name}"
+        kind "None"
+        language "C++"
+
+        files {
+            "vendor/%{prj.name}/include/nlohmann/**.hpp",
+        }
+
+        DeclareCommon()
+
     project "InternalModMenu"
         location "src/"
         kind "SharedLib"
@@ -112,6 +133,8 @@ workspace "InternalModMenu"
 			"vendor/g3log/src",
 			"vendor/minhook/include",
 			"vendor/imgui",
+            "vendor/stb",
+            "vendor/json/include",
             "src/"
         }
 
@@ -131,7 +154,7 @@ workspace "InternalModMenu"
         links {
 			"g3log",
             "imgui",
-            "minhook"
+            "minhook",
         }
 
         pchheader "%{PrecompiledHeaderInclude}"
