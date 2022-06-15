@@ -26,14 +26,14 @@ namespace change_me
 		using WndProc_t = HRESULT(HWND, UINT, WPARAM, LPARAM);
 		HookWrapper<DHookWrapper, WndProc_t*> m_Test1;
 
-		PointerImpl<ID3D11Device*> m_Device;
-		PointerImpl<ID3D11DeviceContext*> m_Context;
+		ID3D11Device* m_Device;
+		ID3D11DeviceContext* m_Context;
 
 		using Present_t = HRESULT(IDXGISwapChain* This, UINT Flags, UINT VSync);
 		HookWrapper<DHookWrapper, Present_t*> m_SwapChain;
 
-		PointerImpl<long*> m_Height;
-		PointerImpl<long*> m_Width;
+		using FrameTick_t = void(__int64 ThisPtr, void* a1, const float tick, float fps, wchar_t** gfxInfo, int mousePos[2]);
+		HookWrapper<DHookWrapper, FrameTick_t*> m_FrameTick;/*gfxtest*/
 
 		HWND m_Hwnd;
 

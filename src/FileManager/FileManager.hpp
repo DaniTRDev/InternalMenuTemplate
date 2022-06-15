@@ -34,14 +34,14 @@ namespace change_me
 			if (filePath.is_absolute())
 				throw std::exception("Project files are relative to the BaseDir, don't use absolute paths!");
 
-			return File(Get(), filePath);
+			return File(filePath);
 		}
 		Folder GetProjectFolder(std::filesystem::path folderPath)
 		{
 			if (folderPath.is_absolute())
 				throw std::exception("Project folders are relative to the BaseDir, don't use absolute paths!");
 
-			return Folder(Get(), folderPath);
+			return Folder(folderPath);
 		}
 
 		static std::filesystem::path EnsureFileCanBeCreated(const std::filesystem::path filePath)

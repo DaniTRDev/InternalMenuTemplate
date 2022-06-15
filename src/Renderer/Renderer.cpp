@@ -1,13 +1,13 @@
 #include "Common.hpp"
-#include "Threads/Pointers/Pointers.hpp"
-#include "Threads/Hooking/Hooking.hpp"
+#include "Pointers/Pointers.hpp"
+#include "Hooking/Hooking.hpp"
 #include "Renderer/UIManager.hpp"
 #include "Renderer.hpp"
-#include "Menu/Main.hpp" /*this one will also include other menuses*/
+#include "Menu/MainMenu.hpp" /*this one will also include other menuses*/
 
 namespace change_me
 {
-	Renderer::Renderer() : m_Open(false), m_Device(nullptr),
+	Renderer::Renderer() : m_Initialized(false), m_Open(false), m_Device(nullptr),
 		m_DeviceContext(nullptr), m_SwapChain(nullptr), m_RenderTarget(nullptr),
 		m_BlendState(nullptr), m_BlendColor()
 	{}
@@ -32,7 +32,6 @@ namespace change_me
 
 		m_Device = Device;
 		m_DeviceContext = DeviceContext;
-
 		m_SwapChain = SwapChain;
 
 		if ((!CreateRenderTarget()) || (!CreateBlendState()))
@@ -40,13 +39,7 @@ namespace change_me
 
 		InitializeImGui();
 
-		g_AnimationManager = std::make_shared<AnimationManager>();
-		m_Notifications = std::make_unique<NotificationManager>();
-
-		m_UIManager = std::make_unique<UIManager>();
-		m_UIManager->Initialize();
-
-		m_Notifications->PushNotification(g_CheatName.data(), "Menu correctly initialized!");
+		UIManager::Get().Initialize();
 
 		m_Initialized = true;
 
@@ -56,14 +49,12 @@ namespace change_me
 	{
 		if (m_RenderTarget && m_BlendState)
 		{
-			m_Notifications->ClearNotifications();
-			m_Notifications.reset();
+			g_OptionsSettings->Save();
+			g_UISettings->Save();
 
-			m_UIManager->Uninitialize();
-			m_UIManager.reset();
-
-			g_AnimationManager->ClearAnimationQueue();
-			g_AnimationManager.reset();
+			NotificationManager::Get().ClearNotifications();
+			UIManager::Get().Uninitialize();
+			AnimationManager::Get().ClearAnimationQueue();
 
 			ImGui_ImplDX11_Shutdown();
 			ImGui_ImplWin32_Shutdown();
@@ -81,7 +72,7 @@ namespace change_me
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
 
-		if (!ImGui_ImplWin32_Init(Pointers::Get()->m_Hwnd))
+		if (!ImGui_ImplWin32_Init(Pointers::Get().m_Hwnd))
 		{
 			LOG(WARNING) << "Couldn't initialize ImGui::Win32!";
 			return;
@@ -109,24 +100,26 @@ namespace change_me
 	}
 	void Renderer::Render()
 	{
-		if (m_Initialized && m_Open)
+		if (m_Initialized)
 		{
-			if (ImGui::Begin("##MainMenuWindow", nullptr, 
+
+			if (ImGui::Begin("##MainMenuWindow", nullptr,
 				ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBackground
 				| ImGuiWindowFlags_NoMove))
 			{
 				ImGui::SetWindowPos(ImVec2(0, 0));
 				ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
-				MainMenu(m_UIManager.get());
-				m_UIManager->Render();
+				if (m_Open)
+				{
+					MainMenu::Get().Render();
+					UIManager::Get().Render();
+				}
 
-				m_Notifications->Run();
-				g_AnimationManager->Run();
+				NotificationManager::Get().Run();
+				AnimationManager::Get().Run();
 
 			} ImGui::End();
-
-
 		}
 	}
 	void Renderer::EndFrame()
@@ -148,8 +141,8 @@ namespace change_me
 
 		auto Res = ImGui_ImplWin32_WndProcHandler(hWnd, Msg, wParam, lParam);
 
-		if (ImGui::IsKeyDown(ImGuiKey_KeypadMultiply))
-			m_Open ^= true;
+		if (Msg == WM_KEYDOWN && std::uint32_t(wParam) == VK_MULTIPLY)
+			m_Open = !m_Open;
 
 		if (m_Open)
 		{

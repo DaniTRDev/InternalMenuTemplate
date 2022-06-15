@@ -5,14 +5,14 @@ namespace change_me
 
 	class Renderer : public Singleton<Renderer>
 	{
-	public:
+	public: /*general render methods*/
 
 		Renderer();
-		
+
 		void Initialize(ID3D11Device* Device, ID3D11DeviceContext* DeviceContext, IDXGISwapChain* SwapChain);
 		void Uninitialize();
 
-	public:
+	public: /*scene stuff*/
 
 		void NewFrame();
 		void Render();
@@ -20,7 +20,7 @@ namespace change_me
 
 		bool WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-	public:
+	public: /*d3d related stuff*/
 
 		bool CreateRenderTarget();
 		bool CreateBlendState();
@@ -46,9 +46,6 @@ namespace change_me
 
 		bool m_Open;
 		bool m_Initialized;
-
-		std::unique_ptr<NotificationManager> m_Notifications;
-		std::unique_ptr<UIManager> m_UIManager;
 
 	private: /*d3d11 stuff*/
 

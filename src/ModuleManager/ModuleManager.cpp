@@ -23,7 +23,6 @@ namespace change_me
 		m_Size = NtHeaders->OptionalHeader.SizeOfImage;
 
 		m_Initialized = true;
-
 		return true;
 	}
 	bool Module::IsModuleLoaded()
@@ -62,7 +61,7 @@ namespace change_me
 	void ModuleManager::AddModule(std::shared_ptr<Module> Mod)
 	{
 		auto ModId = Joaat(Mod->GetName());
-		if (GetModule(ModId))
+		if (GetModule(Mod->GetName()))
 		{
 			LOG(WARNING) << "The module " << Mod->GetName() << " has already been added";
 			return;
@@ -70,12 +69,14 @@ namespace change_me
 
 		m_Modules.insert({ ModId, Mod }); /*insert the module*/
 
-		ThreadPool::Get()->PushTask([](std::shared_ptr<Module> Mod)
+		ThreadPool::Get().PushTask([](std::shared_ptr<Module> Mod)
 			{
+				LOG(INFO) << "Waiting for module: " << Mod->GetName() << " to be loaded!";
+
 				while (!Mod->IsModuleLoaded()) /*add a task to get the module information*/
 				{
 					Mod->TryGetModule();
-					ThreadPool::Get()->Yield();
+					ThreadPool::Get().Yield();
 				}
 
 				LOG(INFO) << "\n\nCached module:\t{\tName: " << Mod->GetName() << "\tBaseAddress: " << std::hex << Mod->GetBase()
@@ -93,8 +94,9 @@ namespace change_me
 		m_Modules.clear();
 	}
 
-	std::shared_ptr<Module> ModuleManager::GetModule(std::uint32_t Id)
+	std::shared_ptr<Module> ModuleManager::GetModule(std::string_view Name)
 	{
+		auto Id = Joaat(Name);
 		auto It = m_Modules.find(Id);
 
 		if (It != m_Modules.end())

@@ -14,13 +14,9 @@ namespace change_me
 		File GetFile(std::filesystem::path FilePath) const;
 		const std::filesystem::path GetPath() const;
 
-	protected:
-		Folder(std::shared_ptr<FileManager> FileManager, std::filesystem::path FilePath);
-
 	private:
 
 		friend class FileManager;
-		std::shared_ptr<FileManager> m_FileManager;
 
 		bool m_IsProjectFile;
 
