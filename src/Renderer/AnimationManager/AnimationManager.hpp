@@ -24,7 +24,7 @@ namespace change_me
 		AnimationFunc_t m_Update;
 	};
 
-	class AnimationManager
+	class AnimationManager : public Singleton<AnimationManager>
 	{
 	public:
 
@@ -38,6 +38,6 @@ namespace change_me
 
 		std::vector<std::pair<Timer, std::shared_ptr<AnimationBase>>> m_Animations;
 
-	}; extern std::shared_ptr<AnimationManager> g_AnimationManager;
+	};
 }
 

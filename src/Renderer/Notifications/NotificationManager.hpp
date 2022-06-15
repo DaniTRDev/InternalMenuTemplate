@@ -3,7 +3,7 @@
 namespace change_me
 {
 
-	class NotificationManager
+	class NotificationManager : public Singleton<NotificationManager>
 	{
 	public:
 

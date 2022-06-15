@@ -46,7 +46,7 @@ namespace change_me
 		void Unitialize();
 		/*full name (+ extension), ex: d3d11.dll*/
 
-		std::shared_ptr<Module> GetModule(std::uint32_t Id);
+		std::shared_ptr<Module> GetModule(std::string_view Name);
 
 	private:
 

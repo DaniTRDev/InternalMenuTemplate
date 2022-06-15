@@ -104,10 +104,10 @@ namespace change_me
 		{
 			void Callback(g3::LogMessageMover log)
 			{
-				if (Logger::Get()->m_ConsoleOut.is_open())
-					Logger::Get()->m_ConsoleOut << log.get().toString(LogSink::FormatConsole) << std::flush;
+				if (Logger::Get().m_ConsoleOut.is_open())
+					Logger::Get().m_ConsoleOut << log.get().toString(LogSink::FormatConsole) << std::flush;
 
-				Logger::Get()->m_FileOut << log.get().toString(LogSink::FormatFile) << std::flush;
+				Logger::Get().m_FileOut << log.get().toString(LogSink::FormatFile) << std::flush;
 
 			}
 

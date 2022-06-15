@@ -40,7 +40,7 @@ using namespace std::chrono_literals;
 
 #include <nlohmann/json.hpp>
 
-#include "Threads/Singleton.hpp"
+#include "Singleton.hpp"
 
 #include "Timer.hpp"
 #include "Memory/PointerMath.hpp"
@@ -54,17 +54,25 @@ using namespace std::chrono_literals;
 
 #include "Logger.hpp" /*logger should not be modified very often*/
 
-#include "Threads/ModuleManager/ModuleManager.hpp" /*same with module manager*/
+#include "Settings/Setting.hpp"
+#include "Settings/SettingsListener.hpp"
+#include "Settings/SettingsManager.hpp" /*same with settings manager*/
 
-#include "Threads/PatternScanner/Pattern.hpp"
-#include "Threads/PatternScanner/PatternScanner.hpp" /*same with the pattern scanner*/
+#include "ModuleManager/ModuleManager.hpp" /*same with module manager*/
 
-#include "Threads/Hooking/Hook.hpp" /*this MUST not be modified to avoid conflicts*/
+#include "PatternScanner/Pattern.hpp"
+#include "PatternScanner/PatternScanner.hpp" /*same with the pattern scanner*/
+
+#include "Hooking/Hook.hpp" /*this MUST not be modified to avoid conflicts*/
 
 #include "Renderer/AnimationManager/AnimationManager.hpp" /*AnimationManager should not be modified very often*/
 #include "Renderer/Notifications/NotificationManager.hpp"
 #include "Renderer/UIManager.hpp"
 #include "Renderer/Renderer.hpp" /*renderer should not be modified very often, but Menu should*/
+
+#include "Settings/JsonHelper/JsonHelper.hpp"
+
+#define IMVEC4_2_COL32(Vec) IM_COL32(Vec.x, Vec.y, Vec.z, Vec.w)
 
 namespace change_me
 {
@@ -81,8 +89,5 @@ namespace change_me
 	extern std::string_view g_GameModuleName; /*for ex: GoW.exe || GTA5.exe */
 	extern std::shared_ptr<FiberPool> g_GameFiberPool; /*only used for games that have some short of VM
 													   and you must call functions with a specific context*/
-
-	extern std::uintptr_t** GetSwapChainTable();
-
 	extern std::uint32_t Joaat(std::string_view Str);
 }

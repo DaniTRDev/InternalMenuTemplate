@@ -1,34 +1,39 @@
 #include "Common.hpp"
-#include "Threads/Pointers/Pointers.hpp"
-#include "Threads/Hooking/Hook.hpp"
-#include "Threads/Hooking/Hooking.hpp"
+#include "Pointers/Pointers.hpp"
+#include "Hooking/Hook.hpp"
+#include "Hooking/Hooking.hpp"
 
 using namespace change_me;
+
+
 
 DWORD WINAPI MainThread(LPVOID)
 {
 	std::filesystem::path BaseDir = std::getenv("appdata");
 	BaseDir /= g_CheatName.data();
 
-	FileManager::Get()->Initialize(BaseDir);
-	Logger::Get()->Initialize(g_CheatName, FileManager::Get()->GetProjectFile("cout.log"));
+	FileManager::Get().Initialize(BaseDir);
+	Logger::Get().Initialize(g_CheatName, FileManager::Get().GetProjectFile("cout.log"));
 
-	g_GameModuleName = "GoW.exe";
+	g_GameModuleName = "GFXTest64.exe";
 
 	MH_Initialize();
 
 	try
 	{
-		LOG(INFO) << "Initializing...";
+		LOG(INFO) << "Waiting for game window...";
+
+		while (!FindWindowA("gfx_test", nullptr))
+			continue;
 
 		LOG(INFO) << "Initializing ThreadPool";
-		ThreadPool::Get()->Initialize();
-		ThreadPool::Get()->SetState(true);
+		ThreadPool::Get().Initialize();
+		ThreadPool::Get().SetState(true);
 
 		/*start the components*/
-		ModuleManager::Get()->Initialize();
-		PatternScanner::Get()->Initialize();
-		Pointers::Get()->Initialize();
+		ModuleManager::Get().Initialize();
+		PatternScanner::Get().Initialize();
+		Pointers::Get().Initialize();
 
 		while (g_Running)
 		{
@@ -43,35 +48,21 @@ DWORD WINAPI MainThread(LPVOID)
 
 		std::this_thread::sleep_for(100ms); /*make sure everything is stopped*/
 
-		Hooking::Get()->Unitialize();
-		Hooking::Get().reset();
-
-		Pointers::Get().reset();
-		PatternScanner::Get().reset();
-
-		ModuleManager::Get()->Unitialize();
-		ModuleManager::Get().reset();
-
-		ThreadPool::Get()->Uninitialize();
-		ThreadPool::Get().reset();
-
+		ThreadPool::Get().Uninitialize();
 		LOG(INFO) << "Uninitialized ThreadPool!";
 
-		Renderer::Get()->Uninitialize();
-		Renderer::Get().reset();
+		Hooking::Get().Unitialize();
 
+		ModuleManager::Get().Unitialize();
+
+		Renderer::Get().Uninitialize();
 		LOG(INFO) << "Uninitialized Renderer!";
-
-		FileManager::Get().reset();
-		LOG(INFO) << "Uninitialized FileManager!";
 
 		LOG(INFO) << "Dettaching";
 
 		std::this_thread::sleep_for(1000ms); /*make sure everything is uninitialized*/
 
-		Logger::Get()->Uninitialize();
-		Logger::Get().reset();
-
+		Logger::Get().Uninitialize();
 		MH_Uninitialize();
 	}
 	catch (const std::exception& ex)

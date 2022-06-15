@@ -77,7 +77,7 @@ namespace change_me
 		{ 
 			if (m_RenderingNotifications < 3) /*we will only render 3 notifications each time*/
 			{
-				g_AnimationManager->PushNewAnimation(Noti);
+				AnimationManager::Get().PushNewAnimation(Noti);
 				m_RenderingNotifications++;
 			}
 

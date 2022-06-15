@@ -14,7 +14,7 @@ namespace change_me
 			m_Created(false), m_Enabled(false)
 			{}
 
-		virtual void CreateHook(PointerMath Target) = 0;
+		virtual void CreateHook() = 0;
 		virtual void DestroyHook() = 0;
 
 		virtual void ReHook() = 0;
@@ -48,7 +48,7 @@ namespace change_me
 			m_Target = Target;
 		}
 
-		inline void CreateHook(PointerMath Target) override
+		inline void CreateHook() override
 		{
 			if (m_Created)
 			{
@@ -63,13 +63,10 @@ namespace change_me
 			}
 			else if (m_Name.length() == 0)
 			{
-				LOG(WARNING) << "Hook at address [" << ADD_COLOR_TO_TEXT(LogColor::MAGENTA, Target.As<std::uintptr_t>()) 
+				LOG(WARNING) << "Hook at address [" << ADD_COLOR_TO_TEXT(LogColor::MAGENTA, m_Target.As<std::uintptr_t>()) 
 					<< "] doesn't have a valid name!";
 				return;
 			}
-
-			if (m_Target.As<std::uintptr_t>() == 0)
-				m_Target = Target;
 
 			void* Orig = nullptr;
 			auto Res = MH_CreateHook(m_Target.As<void*>(), m_Detour.As<void*>(), &Orig);
@@ -139,7 +136,6 @@ namespace change_me
 		{
 			if (m_Enabled && m_Created)
 			{
-
 				auto Res = MH_DisableHook(m_Target.As<void*>());
 
 				if (Res != MH_OK)
@@ -188,7 +184,7 @@ namespace change_me
 			m_Target = Target;
 		}
 
-		inline void CreateHook(PointerMath Target) override
+		inline void CreateHook() override
 		{
 			if (m_Created)
 			{
@@ -203,12 +199,10 @@ namespace change_me
 			}
 			else if (m_Name.size() == 0)
 			{
-				LOG(WARNING) << "Hook at address [" << ADD_COLOR_TO_TEXT(LogColor::MAGENTA, Target.As<std::uintptr_t>()) 
+				LOG(WARNING) << "Hook at address [" << ADD_COLOR_TO_TEXT(LogColor::MAGENTA, m_Target.As<std::uintptr_t>()) 
 					<< "] name is not valid!";
 				return;
 			}
-
-			m_Target = Target;
 
 			auto Object = m_Target.As<void***>();
 			m_OriginalTable = *Object;
@@ -387,6 +381,11 @@ namespace change_me
 			return m_Hook->Get<PtrCast>();
 		}
 
+		inline std::shared_ptr<DHook>& GetHook()
+		{
+			return m_Hook;
+		}
+
 	private:
 
 		std::shared_ptr<DHook> m_Hook;
@@ -427,6 +426,11 @@ namespace change_me
 		inline void UnSetupHook(std::size_t Index)
 		{
 			m_Hook->UnSetupHook(Index);
+		}
+
+		inline std::shared_ptr<VMTHook> GetHook()
+		{
+			return m_Hook;
 		}
 
 	private:

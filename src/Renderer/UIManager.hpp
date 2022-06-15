@@ -4,11 +4,10 @@ namespace change_me
 {
 	struct UIIcon
 	{
-		UIIcon(std::string Name, ID3D11ShaderResourceView* ResourceView, ImVec2 IconSize, 
+		UIIcon(ID3D11ShaderResourceView* ResourceView, ImVec2 IconSize, 
 			void * IconPixelBuffer, std::uint32_t Channels);
 		~UIIcon();
 
-		std::string m_Name;
 		ID3D11ShaderResourceView* m_ResourceView;
 
 		ImVec2 m_IconSize; /*used to properly scale it*/
@@ -22,28 +21,40 @@ namespace change_me
 	};
 	struct UIFont
 	{
-		UIFont(std::string Name, ImFont* Font);
+		UIFont(ImFont* Font);
 		~UIFont();
 
-		std::string m_Name;
 		ImFont* m_ImFont;
 	};
 
+	struct UITabConfig
+	{
+		std::string m_Name;
+		std::string m_DisplayName;
+		std::string m_FontName; /*if these 2 fields are empty the it will use default font & icon*/
+		std::string m_IconName;
+	};
 	struct UITab
 	{
-		UITab(std::string_view Name, std::uint32_t IconId, std::uint32_t FontId);
+		UITab(std::string_view DisplayName, std::shared_ptr<UIIcon> Icon, std::shared_ptr<UIFont> Font);
 
-		std::string_view m_Name;
+		std::string m_DisplayName;
 
-		std::uint32_t m_IconId;
-		std::uint32_t m_FontId;
+		bool m_Selected{};
+		bool m_Show{};
+
+		std::shared_ptr<UIIcon> m_Icon;
+		std::shared_ptr<UIFont> m_Font;
 	};
 
-	class UIManager
+	class UIManager : public Singleton<UIManager>, public SettingsListener
 	{
 	public:
 
 		UIManager();
+
+		void Save() override;
+		void Load(nlohmann::json& Node) override;
 
 		void Initialize(); /*load fonts and icons*/
 		void Uninitialize();
@@ -67,12 +78,12 @@ namespace change_me
 
 		void UpdateInput();
 
-		bool AddTab(std::string_view Name, std::uint32_t IconId, std::uint32_t FontId);
+		bool AddTab(std::string_view Name);
 		void PopTab();
 
-		void ScaleIcon(std::shared_ptr<UIIcon> Icon, ImVec2 NewSize); 
+		void ScaleIcon(std::string_view Name, std::shared_ptr<UIIcon> Icon, ImVec2 NewSize); 
 		/*this will be called after laoding icons or after changing options from TabSelector*/
-		
+
 	public:
 
 		ImVec2 GetSingleTabSizeM(); /*margins applied*/
@@ -82,31 +93,41 @@ namespace change_me
 
 	private:
 
+		void OnNewTab(std::string_view Name);
+
+	private:
+
 		bool m_SwitchingTab;
 		bool m_SwitchTabAnimState;
 
-		std::uint32_t m_CurrentTabId { 0 };
+		std::uint32_t m_LastSelectedTab; /*used to control the selecting tab animation*/
 
-		std::map<std::uint32_t, std::unique_ptr<UITab>> m_Tabs;
+		std::map<std::string, std::shared_ptr<UITab>> m_Tabs;
+		std::vector<std::shared_ptr<UITab>> m_SelectorTabs; /*used to have a quick acces to tabs 
+																		from the tab selector*/
 
-		std::map<std::uint32_t, std::shared_ptr<UIIcon>> m_Icons;
-		std::map<std::uint32_t, std::shared_ptr<UIFont>> m_Fonts;
+		std::map<std::string, std::shared_ptr<UIIcon>> m_Icons;
+		std::map<std::string, std::shared_ptr<UIFont>> m_Fonts;
 
-		bool m_PushedFont;
+		std::shared_ptr<UIIcon> m_DefaultTabIcon; /*used to avoid crash when a tab has an invalid icon name*/
+		std::shared_ptr<UIFont> m_DefaultTabFont; /*used to avoid crash when a tab has an invalid font name*/
 
-	public: /*configurations, this will be moved into another struct / class when the config system is done*/
+	private: /*configurations, this will be moved into another struct / class when the config system is done*/
 		
 		Folder m_UIFolder;
 
-		ImVec2 m_TabSelectorPos{ 0.f, 0.f };
+		SettingArray<UITabConfig> m_TabsCfg{ "Tabs" };
 
-		ImVec2 m_TabSelectorSize { 25.f, 30.f };/*raw size per tab - NO MARGINS*/
-		ImVec2 m_TabSelectorMargin { 5.f, 5.f }; /*the space between the icon and the rect end*/
+		Setting<ImVec2, ImVec2(0.f, 0.f)> m_TabSelectorPos{ "TabSelectorPos" };
 
-		std::uint32_t m_TabSelectorBoxCol{ IM_COL32(26, 23, 30, 255) };
-		std::uint32_t m_TabSelectorSelectedTabCol{ IM_COL32(72, 76, 167, 255) };
-		std::uint32_t m_TabSelectorHoveredTabCol{ IM_COL32(72, 76, 167, 180) };
-		std::uint32_t m_TabSelectorOutlineColor{ IM_COL32(72, 76, 167, 255) };
+		Setting<ImVec2, ImVec2(25.f, 30.f)> m_TabSelectorSize{ "TabSelectorSize" };/*raw size per tab - NO MARGINS*/
+		Setting<ImVec2, ImVec2(5.f, 5.f)> m_TabSelectorMargin{ "TabSelectorMargin" }; /*the space between the icon and the rect end*/
+
+		Setting<ImVec4, ImVec4(26, 23, 30, 255)> m_TabSelectorBoxCol{ "TabSelectorBoxCol" };
+		Setting<ImVec4, ImVec4(72, 76, 167, 255)> m_TabSelectorSelectedTabCol{ "TabSelectorSelectedTabCol" };
+		Setting<ImVec4, ImVec4(72, 76, 167, 180)> m_TabSelectorHoveredTabCol{ "TabSelectorHoveredTabCol" };
+		Setting<ImVec4, ImVec4(72, 76, 167, 255)> m_TabSelectorOutlineColor{ "TabSelectorOutlineColor" };
+
 	};
 }
 

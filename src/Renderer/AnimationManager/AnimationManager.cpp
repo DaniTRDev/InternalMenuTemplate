@@ -2,8 +2,6 @@
 
 namespace change_me
 {
-	std::shared_ptr<AnimationManager> g_AnimationManager;
-
 	AnimationBase::AnimationBase(AnimationFunc_t Update,
 		std::chrono::high_resolution_clock::duration Time) : m_Time(Time), m_Update(Update)
 	{

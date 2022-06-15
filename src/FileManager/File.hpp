@@ -15,16 +15,16 @@ namespace change_me
 
 		bool DoesFileExist();
 
-	protected:
-		File(std::shared_ptr<FileManager> FileManager, std::filesystem::path FilePath);
-
 	private:
 
 		friend class FileManager;
 
 		bool m_IsProjectFile;
-
 		std::filesystem::path m_FilePath;
+
+		std::fstream m_FileStream;
+
+		std::size_t m_FileSize;
 
 	};
 
