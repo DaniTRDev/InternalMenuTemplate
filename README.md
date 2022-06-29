@@ -3,7 +3,7 @@
 ## Setting up
 
 ```
-git clone https://github.com/Yimura/InternalMenuTemplate.git --recursive
+git clone https://github.com/DaniTRDev/InternalMenuTemplate.git --recursive
 ```
 
 ```
